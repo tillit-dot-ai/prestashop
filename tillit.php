@@ -44,6 +44,8 @@ class Tillit extends PaymentModule
         $this->languages = Language::getLanguages(false);
         $this->displayName = $this->l('Tillit Payment');
         $this->description = $this->l('This module allows any merchant to accept payments with tillit payment gateway.');
+        $this->merchant_id = Configuration::get('PS_TILLIT_MERACHANT_ID');
+        $this->api_key = Configuration::get('PS_TILLIT_API_KEY');
     }
 
     public function install()
@@ -53,6 +55,8 @@ class Tillit extends PaymentModule
         }
 
         return parent::install() &&
+            $this->registerHook('actionAdminControllerSetMedia') &&
+            $this->registerHook('actionFrontControllerSetMedia') &&
             $this->registerHook('paymentOptions') &&
             $this->registerHook('displayPaymentReturn') &&
             $this->registerHook('displayAdminOrderLeft') &&
@@ -87,6 +91,8 @@ class Tillit extends PaymentModule
     public function uninstall()
     {
         return parent::uninstall() &&
+            $this->unregisterHook('actionAdminControllerSetMedia') &&
+            $this->unregisterHook('actionFrontControllerSetMedia') &&
             $this->unregisterHook('paymentOptions') &&
             $this->unregisterHook('displayPaymentReturn') &&
             $this->unregisterHook('displayAdminOrderLeft') &&
@@ -378,5 +384,56 @@ class Tillit extends PaymentModule
         Configuration::updateValue('PS_TILLIT_ENABLE_B2B_B2C_RADIO', Tools::getValue('PS_TILLIT_ENABLE_B2B_B2C_RADIO'));
         
         $this->output .= $this->displayConfirmation($this->l('Tillit settings are updated.'));
+    }
+    
+    public function hookActionAdminControllerSetMedia()
+    {
+        $controller = get_class($this->context->controller);
+        if($controller == 'AdminModulesController' && Tools::getValue('configure') == $this->name) {
+            $this->context->controller->addJS($this->_path . 'views/js/admin.js');
+        }
+    }
+    
+    public function hookPaymentOptions($params)
+    {
+        if (!$this->active) {
+            return;
+        }
+
+        if (Tools::isEmpty($this->merchant_id) || Tools::isEmpty($this->api_key)) {
+            return;
+        }
+
+        $payment_options = [
+            $this->getTillitPaymentOption(),
+        ];
+
+        return $payment_options;
+    }
+    
+    protected function getTillitPaymentOption()
+    {
+        $title = Configuration::get('PS_TILLIT_TITLE', $this->context->language->id);
+        $subtitle = Configuration::get('PS_TILLIT_SUB_TITLE', $this->context->language->id);
+        
+        if (Tools::isEmpty($title)) {
+            $title = $this->l('Business invoice 30 days');
+        }
+        if (Tools::isEmpty($subtitle)) {
+            $subtitle = $this->l('Receive the invoice via EHF and PDF');
+        }
+        
+        $this->context->smarty->assign(array(
+            'subtitle' => $subtitle,
+        ));
+        
+        $preTillitOption = new PaymentOption();
+        $preTillitOption->setCallToActionText($title)
+                ->setAction($this->context->link->getModuleLink($this->name, 'payment', array(), true))
+                ->setInputs(['token' => ['name' => 'token', 'type' => 'hidden', 'value' => Tools::getToken(false)]])
+                ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'tillit/views/img/tillit.SVG'))
+                ->setAdditionalInformation($this->context->smarty->fetch('module:tillit/views/templates/hook/paymentinfo.tpl'));
+        
+        return $preTillitOption;
     }
 }
