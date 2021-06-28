@@ -233,7 +233,7 @@ class Tillit extends PaymentModule
                         'label' => $this->l('Activate company name auto-complete'),
                         'name' => 'PS_TILLIT_ENABLE_COMPANY_NAME',
                         'is_bool' => true,
-                        'desc' => $this->l('If you choose YES then enable only in mobile device.'),
+                        'hint' => $this->l('If you choose YES then customers to use search api to find their company names.'),
                         'required' => true,
                         'values' => array(
                             array(
@@ -253,7 +253,7 @@ class Tillit extends PaymentModule
                         'label' => $this->l('Activate company org.id auto-complete'),
                         'name' => 'PS_TILLIT_ENABLE_COMPANY_ID',
                         'is_bool' => true,
-                        'desc' => $this->l('If you choose YES then enable only in mobile device.'),
+                        'hint' => $this->l('If you choose YES then customers to use search api to fins their company id (number) automatically.'),
                         'required' => true,
                         'values' => array(
                             array(
@@ -273,7 +273,7 @@ class Tillit extends PaymentModule
                         'label' => $this->l('Finalize purchase when order is shipped'),
                         'name' => 'PS_TILLIT_FANILIZE_PURCHASE',
                         'is_bool' => true,
-                        'desc' => $this->l('If you choose YES then enable only in mobile device.'),
+                        'hint' => $this->l('If you choose YES then order status of shipped to be passed to tillit.'),
                         'required' => true,
                         'values' => array(
                             array(
@@ -293,7 +293,7 @@ class Tillit extends PaymentModule
                         'label' => $this->l('Activate B2C/B2B check-out radio button'),
                         'name' => 'PS_TILLIT_ENABLE_B2B_B2C_RADIO',
                         'is_bool' => true,
-                        'desc' => $this->l('If you choose YES then enable only in mobile device.'),
+                        'hint' => $this->l('If you choose YES then allow different types of account (personal/business).'),
                         'required' => true,
                         'values' => array(
                             array(
