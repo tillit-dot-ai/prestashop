@@ -47,6 +47,9 @@ class Tillit extends PaymentModule
         $this->merchant_id = Configuration::get('PS_TILLIT_MERACHANT_ID');
         $this->api_key = Configuration::get('PS_TILLIT_MERACHANT_API_KEY');
         $this->payment_mode = Configuration::get('PS_TILLIT_PAYMENT_MODE');
+        $this->enable_company_name = Configuration::get('PS_TILLIT_ENABLE_COMPANY_NAME');
+        $this->enable_company_id = Configuration::get('PS_TILLIT_ENABLE_COMPANY_ID');
+        $this->enable_order_intent = Configuration::get('PS_TILLIT_ENABLE_ORDER_INTENT');
     }
 
     public function install()
@@ -64,9 +67,10 @@ class Tillit extends PaymentModule
             $this->registerHook('displayAdminOrderTabLink') &&
             $this->registerHook('displayAdminOrderTabContent') &&
             $this->registerHook('displayOrderDetail') &&
-            $this->installTillitSettings();
+            $this->installTillitSettings() &&
+            $this->installTillitTables();
     }
-
+    
     protected function installTillitSettings()
     {
         $installData = array();
@@ -90,6 +94,21 @@ class Tillit extends PaymentModule
         Configuration::updateValue('PS_TILLIT_ENABLE_BUYER_REFUND', 1);
         return true;
     }
+    
+    protected function installTillitTables()
+    {
+        $sql = array();
+        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` ADD COLUMN `account_type` VARCHAR(255) NULL';
+        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` ADD COLUMN `companyid` VARCHAR(255) NULL';
+        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` ADD COLUMN `department` VARCHAR(255) NULL';
+        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` ADD COLUMN `project` VARCHAR(255) NULL';
+        
+        foreach ($sql as $query) {
+        if (Db::getInstance()->execute($query) == false) {
+            return false;
+        }
+}       return true;
+    }
 
     public function uninstall()
     {
@@ -102,7 +121,23 @@ class Tillit extends PaymentModule
             $this->unregisterHook('displayAdminOrderTabLink') &&
             $this->unregisterHook('displayAdminOrderTabContent') &&
             $this->unregisterHook('displayOrderDetail') &&
-            $this->uninstallTillitSettings();
+            $this->uninstallTillitSettings() &&
+            $this->uninstallTillitTables();
+    }
+    
+    protected function uninstallTillitTables()
+    {
+        $sql = array();
+        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` DROP COLUMN `account_type`';
+        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` DROP COLUMN `companyid`';
+        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` DROP COLUMN `department`';
+        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` DROP COLUMN `project`';
+        
+        foreach ($sql as $query) {
+        if (Db::getInstance()->execute($query) == false) {
+            return false;
+        }
+}       return true;
     }
 
     protected function uninstallTillitSettings()
@@ -544,6 +579,20 @@ class Tillit extends PaymentModule
         $this->output .= $this->displayConfirmation($this->l('Other settings are updated.'));
     }
 
+    public function hookActionFrontControllerSetMedia()
+    {
+        Media::addJsDef(array('tillit' => array(
+                'tillit_search_host' => $this->getTillitSearchHostUrl(),
+                'tillit_checkout_host' => $this->getTillitCheckoutHostUrl(),
+                'company_name_search' => $this->enable_company_name,
+                'company_id_search' => $this->enable_company_id,
+                'merchant_id' => $this->merchant_id,
+        )));
+        $this->context->controller->registerStylesheet('tillit-select2', 'modules/tillit/views/css/select2.min.css', array('priority' => 200, 'media' => 'all'));
+        $this->context->controller->registerJavascript('tillit-select2', 'modules/tillit/views/js/select2.min.js', array('priority' => 200, 'attribute' => 'async'));
+        $this->context->controller->registerJavascript('tillit-script', 'modules/tillit/views/js/tillit.js', array('priority' => 200, 'attribute' => 'async'));
+    }
+
     public function hookPaymentOptions($params)
     {
         if (!$this->active) {
@@ -552,6 +601,11 @@ class Tillit extends PaymentModule
 
         if (Tools::isEmpty($this->merchant_id) || Tools::isEmpty($this->api_key)) {
             return;
+        }
+
+        //check Pre-approve buyer for enable payment method
+        if ($this->enable_order_intent) {
+            //$this->getTillitApprovalBuyer();
         }
 
         $payment_options = [
@@ -586,47 +640,116 @@ class Tillit extends PaymentModule
 
         return $preTillitOption;
     }
-    
+
     protected function sendTillitLogoToMerchant()
     {
         $image_logo = Configuration::get('PS_TILLIT_MERACHANT_LOGO');
         if ($image_logo && file_exists(_PS_MODULE_DIR_ . $this->name . DIRECTORY_SEPARATOR . 'views/img' . DIRECTORY_SEPARATOR . $image_logo)) {
-            $logo_path =   $this->context->link->protocol_content . Tools::getMediaServer($image_logo) . $this->_path . 'views/img/' . $image_logo;
-            $this->setTillitPaymentRequest("/v1/merchant/".$this->merchant_id."/update", [
+            $logo_path = $this->context->link->protocol_content . Tools::getMediaServer($image_logo) . $this->_path . 'views/img/' . $image_logo;
+            $this->setTillitPaymentRequest("/v1/merchant/" . $this->merchant_id . "/update", [
                 'merchant_id' => $this->merchant_id,
                 'logo_path' => $logo_path
             ]);
         } else {
-            $this->setTillitPaymentRequest("/v1/merchant/".$this->merchant_id."/update", [
+            $this->setTillitPaymentRequest("/v1/merchant/" . $this->merchant_id . "/update", [
                 'merchant_id' => $this->merchant_id,
                 'logo_path' => ''
             ]);
         }
     }
 
+    protected function getTillitApprovalBuyer()
+    {
+        $cart = $this->context->cart;
+        $cutomer = new Customer($cart->id_customer);
+        $currency = new Currency($cart->id_currency);
+        $address = new Address(intval($cart->id_address_invoice));
+
+        $this->setTillitPaymentRequest("/v1/order_intent", [
+            'gross_amount' => $cart->getOrderTotal(true, Cart::BOTH),
+            'currency' => $currency->iso_code,
+            'buyer' => array(
+                'company' => array(
+                    'company' => 'Acme Inc',
+                    'country_prefix' => Country::getIsoById($address->id_country),
+                    'organization_number' => '900000009',
+                ),
+                'representative' => array(
+                    'email' => $cutomer->email,
+                    'first_name' => $cutomer->firstname,
+                    'last_name' => $cutomer->lastname,
+                    'phone_number' => $address->phone,
+                ),
+            ),
+            'line_items' => $this->getTillitProductItems($cart),
+        ]);
+    }
+    
+    protected function getTillitProductItems($cart)
+    {
+        $items = [];
+        $line_items = $cart->getProducts(true);
+        foreach($line_items as $line_item) {
+            $image = Image::getCover($line_item['id_product']);
+            $imagePath = $this->context->link->getImageLink($line_item['link_rewrite'], $image['id_image'], 'home_default');
+            $product = array(
+                'name' => $line_item['name'],
+                'description' => substr($line_item['description_short'], 0, 255),
+                'gross_amount' => $line_item['total_wt'],
+                'net_amount' =>  $line_item['total'],
+                'discount_amount' => '',
+                'tax_amount' => '',
+                'tax_class_name' => $line_item['tax_name'],
+                'tax_rate' => $line_item['rate'],
+                'unit_price' => $line_item['price_wt'],
+                'quantity' => $line_item['cart_quantity'],
+                'quantity_unit' => 'item',
+                'image_url' => $imagePath,
+                'product_page_url' => $this->context->link->getProductLink($line_item['id_product']),
+                'type' => 'PHYSICAL',
+                'details' => [
+                    'barcodes' => [
+                        [
+                            'type' => 'SKU',
+                            'id' => $line_item['ean13']
+                        ]
+                    ]
+                ]
+            );
+            
+            $items[] = $product;
+        }
+        echo "<pre>";
+        print_r($line_items);
+        echo "<pre>";
+        die();
+    }
+
+    protected function getTillitSearchHostUrl()
+    {
+        return 'https://search-api-demo-j6whfmualq-lz.a.run.app';
+    }
+
     protected function getTillitCheckoutHostUrl()
     {
         return $this->payment_mode == 'prod' ? 'https://api.tillit.ai' : ($this->payment_mode == 'dev' ? 'http://huynguyen.hopto.org:8084' : 'https://staging.api.tillit.ai');
     }
-    
+
     protected function setTillitPaymentRequest($endpoint, $payload = [], $method = 'POST')
     {
-        if($method == "POST" || $method == "PUT")
-        {
+        if ($method == "POST" || $method == "PUT") {
             $url = sprintf('%s%s', $this->getTillitCheckoutHostUrl(), $endpoint);
-            $params = empty($payload) ? '' :  json_encode($payload);
+            $params = empty($payload) ? '' : json_encode($payload);
             $headers = [
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Tillit-Merchant-Id' => $this->merchant_id,
-                'Content-Length' => strlen($params),
-                'Authorization' => sprintf('Basic %s', base64_encode(
-                    $this->merchant_id . ':' . $this->api_key
+                'Content-Type: application/json; charset=utf-8',
+                'Tillit-Merchant-Id:' . $this->merchant_id,
+                'Authorization:' . sprintf('Basic %s', base64_encode(
+                        $this->merchant_id . ':' . $this->api_key
                 ))
             ];
-            
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_HEADER, 1);
+            //curl_setopt($ch, CURLOPT_HEADER, 1);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 60);
@@ -635,7 +758,9 @@ class Tillit extends PaymentModule
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
             $response = curl_exec($ch);
+            $info = curl_getinfo($ch);
             curl_close($ch);
         }
+        return $response;
     }
 }
