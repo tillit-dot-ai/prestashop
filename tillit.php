@@ -70,7 +70,7 @@ class Tillit extends PaymentModule
             $this->installTillitSettings() &&
             $this->installTillitTables();
     }
-    
+
     protected function installTillitSettings()
     {
         $installData = array();
@@ -94,20 +94,20 @@ class Tillit extends PaymentModule
         Configuration::updateValue('PS_TILLIT_ENABLE_BUYER_REFUND', 1);
         return true;
     }
-    
+
     protected function installTillitTables()
     {
         $sql = array();
-        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` ADD COLUMN `account_type` VARCHAR(255) NULL';
-        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` ADD COLUMN `companyid` VARCHAR(255) NULL';
-        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` ADD COLUMN `department` VARCHAR(255) NULL';
-        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` ADD COLUMN `project` VARCHAR(255) NULL';
-        
+        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `account_type` VARCHAR(255) NULL';
+        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `companyid` VARCHAR(255) NULL';
+        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `department` VARCHAR(255) NULL';
+        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `project` VARCHAR(255) NULL';
+
         foreach ($sql as $query) {
-        if (Db::getInstance()->execute($query) == false) {
-            return false;
-        }
-}       return true;
+            if (Db::getInstance()->execute($query) == false) {
+                return false;
+            }
+        } return true;
     }
 
     public function uninstall()
@@ -124,20 +124,20 @@ class Tillit extends PaymentModule
             $this->uninstallTillitSettings() &&
             $this->uninstallTillitTables();
     }
-    
+
     protected function uninstallTillitTables()
     {
         $sql = array();
-        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` DROP COLUMN `account_type`';
-        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` DROP COLUMN `companyid`';
-        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` DROP COLUMN `department`';
-        $sql[] = 'ALTER TABLE `'._DB_PREFIX_.'address` DROP COLUMN `project`';
-        
+        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `account_type`';
+        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `companyid`';
+        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `department`';
+        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `project`';
+
         foreach ($sql as $query) {
-        if (Db::getInstance()->execute($query) == false) {
-            return false;
-        }
-}       return true;
+            if (Db::getInstance()->execute($query) == false) {
+                return false;
+            }
+        } return true;
     }
 
     protected function uninstallTillitSettings()
@@ -264,7 +264,6 @@ class Tillit extends PaymentModule
                         'type' => 'file',
                         'label' => $this->l('Logo'),
                         'name' => 'PS_TILLIT_MERACHANT_LOGO',
-                        'delete_url' => 'http://localhost/prestashop/1.6.1.21',
                         'hint' => $this->l('Upload your merchant logo.'),
                     ),
                     array(
@@ -588,6 +587,7 @@ class Tillit extends PaymentModule
                 'company_id_search' => $this->enable_company_id,
                 'merchant_id' => $this->merchant_id,
         )));
+        $this->context->controller->addJqueryUi('ui.autocomplete');
         $this->context->controller->registerStylesheet('tillit-select2', 'modules/tillit/views/css/select2.min.css', array('priority' => 200, 'media' => 'all'));
         $this->context->controller->registerJavascript('tillit-select2', 'modules/tillit/views/js/select2.min.js', array('priority' => 200, 'attribute' => 'async'));
         $this->context->controller->registerJavascript('tillit-script', 'modules/tillit/views/js/tillit.js', array('priority' => 200, 'attribute' => 'async'));
@@ -605,7 +605,10 @@ class Tillit extends PaymentModule
 
         //check Pre-approve buyer for enable payment method
         if ($this->enable_order_intent) {
-            //$this->getTillitApprovalBuyer();
+            $approval_buyer = $this->getTillitApprovalBuyer();
+            if (!$approval_buyer) {
+                return;
+            }
         }
 
         $payment_options = [
@@ -664,15 +667,19 @@ class Tillit extends PaymentModule
         $cutomer = new Customer($cart->id_customer);
         $currency = new Currency($cart->id_currency);
         $address = new Address(intval($cart->id_address_invoice));
-
-        $this->setTillitPaymentRequest("/v1/order_intent", [
-            'gross_amount' => $cart->getOrderTotal(true, Cart::BOTH),
-            'currency' => $currency->iso_code,
+        
+        if ($address->account_type == 'personal') {
+            return false;
+        }
+        
+        $data = $this->setTillitPaymentRequest("/v1/order_intent", [
+            'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
             'buyer' => array(
                 'company' => array(
-                    'company' => 'Acme Inc',
+                    'company_name' => $address->company,
                     'country_prefix' => Country::getIsoById($address->id_country),
-                    'organization_number' => '900000009',
+                    'organization_number' => $address->companyid,
+                    'website' => '',
                 ),
                 'representative' => array(
                     'email' => $cutomer->email,
@@ -681,27 +688,61 @@ class Tillit extends PaymentModule
                     'phone_number' => $address->phone,
                 ),
             ),
-            'line_items' => $this->getTillitProductItems($cart),
+            'currency' => $currency->iso_code,
+            'merchant_id' => $this->merchant_id,
+            'line_items' => array(
+                array(
+                    'name' => 'Cart',
+                    'description' => '',
+                    'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+                    'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+                    'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+                    'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+                    'tax_class_name' => 'VAT ' . Tools::ps_round($cart->getAverageProductsTaxRate() * 100) . '%',
+                    'tax_rate' => strval($cart->getAverageProductsTaxRate() * 100),
+                    'unit_price' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+                    'quantity' => 1,
+                    'quantity_unit' => 'item',
+                    'image_url' => '',
+                    'product_page_url' => '',
+                    'type' => 'PHYSICAL',
+                    'details' => array(
+                        'brand' => '',
+                        'categories' => [],
+                        'barcodes' => [],
+                    ),
+                )
+            ),
         ]);
+        
+        if(isset($data['approved']) && $data['approved']) {
+            return true;
+        } 
+        return false;
     }
-    
+
+    public function getTillitRoundAmount($amount)
+    {
+        return number_format($amount, 2, '.', '');
+    }
+
     protected function getTillitProductItems($cart)
     {
         $items = [];
         $line_items = $cart->getProducts(true);
-        foreach($line_items as $line_item) {
+        foreach ($line_items as $line_item) {
             $image = Image::getCover($line_item['id_product']);
             $imagePath = $this->context->link->getImageLink($line_item['link_rewrite'], $image['id_image'], 'home_default');
             $product = array(
                 'name' => $line_item['name'],
                 'description' => substr($line_item['description_short'], 0, 255),
                 'gross_amount' => $line_item['total_wt'],
-                'net_amount' =>  $line_item['total'],
-                'discount_amount' => '',
+                'net_amount' => $line_item['total'],
+                'discount_amount' => $line_item['reduction'],
                 'tax_amount' => '',
                 'tax_class_name' => $line_item['tax_name'],
                 'tax_rate' => $line_item['rate'],
-                'unit_price' => $line_item['price_wt'],
+                'unit_price' => $line_item['price_without_reduction'],
                 'quantity' => $line_item['cart_quantity'],
                 'quantity_unit' => 'item',
                 'image_url' => $imagePath,
@@ -716,11 +757,11 @@ class Tillit extends PaymentModule
                     ]
                 ]
             );
-            
+
             $items[] = $product;
         }
         echo "<pre>";
-        print_r($line_items);
+        print_r($cart);
         echo "<pre>";
         die();
     }
@@ -758,6 +799,7 @@ class Tillit extends PaymentModule
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
             $response = curl_exec($ch);
+            $response = json_decode($response, true);
             $info = curl_getinfo($ch);
             curl_close($ch);
         }
