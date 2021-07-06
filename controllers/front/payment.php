@@ -32,10 +32,10 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
         parent::postProcess();
 
         $cart = $this->context->cart;
-        $currencyObj = new Currency($cart->id_currency);
+        $currency = new Currency($cart->id_currency);
 
         if ($cart->id_customer == 0 || $cart->id_address_delivery == 0 || $cart->id_address_invoice == 0 || !$this->module->active) {
-            Tools::redirect('index.php?controller=order&step=1');
+            Tools::redirect('index.php?controller=order');
         }
 
         $authorized = false;
@@ -48,14 +48,14 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
         if (!$authorized) {
             $message = $this->module->l('This payment method is not available.');
             $this->errors[] = $message;
-            $this->redirectWithNotifications('index.php?controller=order&step=1');
+            $this->redirectWithNotifications('index.php?controller=order');
         }
 
         $customer = new Customer($cart->id_customer);
         if (!Validate::isLoadedObject($customer)) {
             $message = $this->module->l('Customer is not valid.');
             $this->errors[] = $message;
-            $this->redirectWithNotifications('index.php?controller=order&step=1');
+            $this->redirectWithNotifications('index.php?controller=order');
         }
         
         //Tillit Create order
@@ -64,46 +64,61 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
         $response = $this->module->setTillitPaymentRequest('/v1/order', $paymentdata );
         
         if(!isset($response)) {
-            $message = $this->module->l('Something went wrong.');
+            $message = $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
-            $this->redirectWithNotifications('index.php?controller=order&step=1');
+            $this->redirectWithNotifications('index.php?controller=order');
         }
         
         if(isset($response['result']) && $response['result'] === 'failure') {
             $message = $response;
             $this->errors[] = $message;
-            $this->redirectWithNotifications('index.php?controller=order&step=1');
+            $this->redirectWithNotifications('index.php?controller=order');
         }
         
         if(isset($response['response']['code']) && ($response['response']['code'] === 401 || $response['response']['code'] === 403)) {
             $message = $this->module->l('Website is not properly configured with Tillit payment.');
             $this->errors[] = $message;
-            $this->redirectWithNotifications('index.php?controller=order&step=1');
+            $this->redirectWithNotifications('index.php?controller=order');
         }
         
         if(isset($response['response']['code']) &&  $response['response']['code'] === 400) {
-            $message = $this->module->l('Something went wrong.');
+            $message = $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
-            $this->redirectWithNotifications('index.php?controller=order&step=1');
+            $this->redirectWithNotifications('index.php?controller=order');
         }
         
         $tillit_err = $this->module->getTillitErrorMessage($response);
         if ($tillit_err) {
-            $message = ($tillit_err != '') ? $tillit_err : $this->module->l('Something went wrong.');
+            $message = ($tillit_err != '') ? $tillit_err : $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
-            $this->redirectWithNotifications('index.php?controller=order&step=1');
+            $this->redirectWithNotifications('index.php?controller=order');
         }
         
         if(isset($response['response']['code']) &&  $response['response']['code'] >= 400) {
             $message = $this->module->l('EHF Invoice is not available for this order.');
             $this->errors[] = $message;
-            $this->redirectWithNotifications('index.php?controller=order&step=1');
+            $this->redirectWithNotifications('index.php?controller=order');
         }
         
-        $tillit_order_id = $response['id'];
-        $this->module->setTillitCartPaymentData($cart->id, $tillit_order_id);
-        
-        Tools::redirect($response['tillit_urls']['verify_order_url']);
-        die();
+        if(isset($response['id']) && $response['id']) {
+            $payment_data = array(
+                'tillit_order_id' => $response['id'],
+                'tillit_order_reference' => $response['merchant_reference'],
+                'tillit_order_state' => $response['state'],
+                'tillit_order_status' => $response['status'],
+                'tillit_day_on_invoice' => $this->module->day_on_invoice,
+                'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+            );
+            
+            $this->module->validateOrder($cart->id, Configuration::get('PS_TILLIT_OS_AWAITING'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, null, array(), (int) $currency->id, false, $customer->secure_key);
+            
+            $this->module->setTillitOrderPaymentData($this->module->currentOrder, $payment_data);
+            
+            Tools::redirect($response['tillit_urls']['verify_order_url']);
+        } else {
+            $message = $this->module->l('Something went wrong please contact store owner.');
+            $this->errors[] = $message;
+            $this->redirectWithNotifications('index.php?controller=order');
+        }
     }
 }
