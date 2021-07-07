@@ -71,8 +71,8 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                     ->setType('hidden'),
                 'account_type' => (new FormField())
                     ->setName('account_type')
-                    ->setType('radio-buttons')
-                    ->setValue('business')
+                    ->setType('select')
+                    ->setRequired(true)
                     ->addAvailableValue('personal', $this->getFieldLabel('personal_type'))
                     ->addAvailableValue('business', $this->getFieldLabel('business_type'))
                     ->setLabel($this->getFieldLabel('account_type')),
@@ -99,7 +99,6 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                 
                 if(Configuration::get('PS_TILLIT_ENABLE_COMPANY_NAME')) {
                     if ($field === 'company') {
-                        $formField->setRequired(true);
                         $formField->setType('select');
                     }
                 }
