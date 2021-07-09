@@ -46,7 +46,7 @@ class TillitCancelModuleFrontController extends ModuleFrontController
 
                     $tillit_order_id = $orderpaymentdata['tillit_order_id'];
 
-                    $response = $this->module->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/cancel');
+                    $response = $this->module->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/cancel', [], 'POST');
 
                     $this->restoreDuplicateCart($order->id, $order->id_customer);
 

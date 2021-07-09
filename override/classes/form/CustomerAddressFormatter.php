@@ -60,7 +60,6 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                 true
         );
         $required = array_flip(AddressFormat::getFieldsRequired());
-
         if (Module::isInstalled('tillit') && Module::isEnabled('tillit')) {
             $format = [
                 'back' => (new FormField())
@@ -83,26 +82,28 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                     ),
             ];
 
+            //insert new fileds
             $inserted = array('companyid', 'department', 'project');
             array_splice($fields, 3, 0, $inserted);
+
+            //move country fileds
+            $out = array_splice($fields, array_search('Country:name', $fields), 1);
+            array_splice($fields, 2, 0, $out);
 
             foreach ($fields as $field) {
                 $formField = new FormField();
                 $formField->setName($field);
-
                 $fieldParts = explode(':', $field, 2);
 
                 if ($field === 'address2') {
-                    $formField->setRequired(true);
                     $formField->setType('number');
                 }
-                
-                if(Configuration::get('PS_TILLIT_ENABLE_COMPANY_NAME')) {
+
+                if (Configuration::get('PS_TILLIT_ENABLE_COMPANY_NAME')) {
                     if ($field === 'company') {
-                        $formField->setType('select');
+                        $formField->addAvailableValue('placeholder', $this->translator->trans('Search your compnay name', [], 'Shop.Forms.Labels'));
                     }
                 }
-
                 if (count($fieldParts) === 1) {
                     if ($field === 'postcode') {
                         if ($this->country->need_zip_code) {
@@ -110,6 +111,8 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                         }
                     } elseif ($field === 'phone') {
                         $formField->setType('tel');
+                        $formField->setRequired(true);
+                        $formField->addAvailableValue('placeholder', $this->translator->trans('+47 99999999', [], 'Shop.Forms.Labels'));
                     } elseif ($field === 'dni' && null !== $this->country) {
                         if ($this->country->need_identification_number) {
                             $formField->setRequired(true);
@@ -117,15 +120,8 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                     }
                 } elseif (count($fieldParts) === 2) {
                     list($entity, $entityField) = $fieldParts;
-
-                    // Fields specified using the Entity:field
-                    // notation are actually references to other
-                    // entities, so they should be displayed as a select
                     $formField->setType('select');
-
-                    // Also, what we really want is the id of the linked entity
                     $formField->setName('id_' . strtolower($entity));
-
                     if ($entity === 'Country') {
                         $formField->setType('countrySelect');
                         $formField->setValue($this->country->id);
@@ -148,19 +144,12 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                         }
                     }
                 }
-
                 $formField->setLabel($this->getFieldLabel($field));
                 if (!$formField->isRequired()) {
-                    // Only trust the $required array for fields
-                    // that are not marked as required.
-                    // $required doesn't have all the info, and fields
-                    // may be required for other reasons than what
-                    // AddressFormat::getFieldsRequired() says.
                     $formField->setRequired(
                         array_key_exists($field, $required)
                     );
                 }
-
                 $format[$formField->getName()] = $formField;
             }
         } else {
@@ -177,18 +166,14 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                         $this->getFieldLabel('alias')
                     ),
             ];
-
             foreach ($fields as $field) {
                 $formField = new FormField();
                 $formField->setName($field);
-
                 $fieldParts = explode(':', $field, 2);
-
                 if ($field === 'address2') {
                     $formField->setRequired(true);
                     $formField->setType('number');
                 }
-
                 if (count($fieldParts) === 1) {
                     if ($field === 'postcode') {
                         if ($this->country->need_zip_code) {
@@ -203,15 +188,8 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                     }
                 } elseif (count($fieldParts) === 2) {
                     list($entity, $entityField) = $fieldParts;
-
-                    // Fields specified using the Entity:field
-                    // notation are actually references to other
-                    // entities, so they should be displayed as a select
                     $formField->setType('select');
-
-                    // Also, what we really want is the id of the linked entity
                     $formField->setName('id_' . strtolower($entity));
-
                     if ($entity === 'Country') {
                         $formField->setType('countrySelect');
                         $formField->setValue($this->country->id);
@@ -234,38 +212,27 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                         }
                     }
                 }
-
                 $formField->setLabel($this->getFieldLabel($field));
                 if (!$formField->isRequired()) {
-                    // Only trust the $required array for fields
-                    // that are not marked as required.
-                    // $required doesn't have all the info, and fields
-                    // may be required for other reasons than what
-                    // AddressFormat::getFieldsRequired() says.
                     $formField->setRequired(
                         array_key_exists($field, $required)
                     );
                 }
-
                 $format[$formField->getName()] = $formField;
             }
         }
-
-        //To add the extra fields in address form
         $additionalAddressFormFields = Hook::exec('additionalCustomerAddressFields', ['fields' => &$format], null, true);
         if (is_array($additionalAddressFormFields)) {
             foreach ($additionalAddressFormFields as $moduleName => $additionnalFormFields) {
                 if (!is_array($additionnalFormFields)) {
                     continue;
                 }
-
                 foreach ($additionnalFormFields as $formField) {
                     $formField->moduleName = $moduleName;
                     $format[$moduleName . '_' . $formField->getName()] = $formField;
                 }
             }
         }
-
         return $this->addConstraints(
                 $this->addMaxLength(
                     $format

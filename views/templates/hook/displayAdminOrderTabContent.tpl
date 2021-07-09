@@ -27,10 +27,10 @@
                 {if $tillitpaymentdata.tillit_order_reference}
                     <tr><td><strong>{l s='Tillit Order Reference' mod='tillit'}</strong></td> <td>{$tillitpaymentdata.tillit_order_reference}</td></tr>
                 {/if}
-                {if $tillitpaymentdata.tillit_order_state}
+                {* {if $tillitpaymentdata.tillit_order_state}
                     <tr><td><strong>{l s='Tillit Order State' mod='tillit'}</strong></td> <td>{$tillitpaymentdata.tillit_order_state}</td></tr>
                 {/if}
-                {* {if $tillitpaymentdata.tillit_order_status}
+                {if $tillitpaymentdata.tillit_order_status}
                     <tr><td><strong>{l s='Tillit Order Status' mod='tillit'}</strong></td> <td>{$tillitpaymentdata.tillit_order_status}</td></tr>
                 {/if} *}
                 {if $tillitpaymentdata.tillit_day_on_invoice}

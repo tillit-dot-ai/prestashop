@@ -61,7 +61,7 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
         //Tillit Create order
         $paymentdata = $this->module->getTillitNewOrderData($cart);
         
-        $response = $this->module->setTillitPaymentRequest('/v1/order', $paymentdata );
+        $response = $this->module->setTillitPaymentRequest('/v1/order', $paymentdata, 'POST');
         
         if(!isset($response)) {
             $message = $this->module->l('Something went wrong please contact store owner.');

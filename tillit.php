@@ -73,6 +73,7 @@ class Tillit extends PaymentModule
             $this->registerHook('displayAdminOrderTabContent') &&
             $this->registerHook('displayOrderDetail') &&
             $this->registerHook('actionOrderSlipAdd') &&
+            $this->registerHook('actionOrderEdited') &&
             $this->installTillitSettings() &&
             $this->createTillitOrderState() &&
             $this->createTillitTables();
@@ -98,7 +99,6 @@ class Tillit extends PaymentModule
         Configuration::updateValue('PS_TILLIT_FANILIZE_PURCHASE', 1);
         Configuration::updateValue('PS_TILLIT_ENABLE_ORDER_INTENT', 1);
         Configuration::updateValue('PS_TILLIT_ENABLE_BUYER_REFUND', 1);
-        Configuration::updateValue('PS_TILLIT_OS_AWAITING', '');
         Configuration::updateValue('PS_TILLIT_OS_PREPARATION', Configuration::get('PS_OS_PREPARATION'));
         Configuration::updateValue('PS_TILLIT_OS_SHIPPING', Configuration::get('PS_OS_SHIPPING'));
         Configuration::updateValue('PS_TILLIT_OS_DELIVERED', Configuration::get('PS_OS_DELIVERED'));
@@ -178,6 +178,7 @@ class Tillit extends PaymentModule
             $this->unregisterHook('displayAdminOrderTabContent') &&
             $this->unregisterHook('displayOrderDetail') &&
             $this->unregisterHook('actionOrderSlipAdd') &&
+            $this->unregisterHook('actionOrderEdited') &&
             $this->uninstallTillitSettings() &&
             $this->deleteTillitTables();
     }
@@ -433,8 +434,8 @@ class Tillit extends PaymentModule
         }
         Configuration::updateValue('PS_TILLIT_TITLE', $values['PS_TILLIT_TITLE']);
         Configuration::updateValue('PS_TILLIT_SUB_TITLE', $values['PS_TILLIT_SUB_TITLE']);
-        Configuration::updateValue('PS_TILLIT_MERACHANT_ID', Tools::getValue('PS_TILLIT_MERACHANT_ID'));
-        Configuration::updateValue('PS_TILLIT_MERACHANT_API_KEY', Tools::getValue('PS_TILLIT_MERACHANT_API_KEY'));
+        Configuration::updateValue('PS_TILLIT_MERACHANT_ID', trim(Tools::getValue('PS_TILLIT_MERACHANT_ID')));
+        Configuration::updateValue('PS_TILLIT_MERACHANT_API_KEY', trim(Tools::getValue('PS_TILLIT_MERACHANT_API_KEY')));
         Configuration::updateValue('PS_TILLIT_PRODUCT_TYPE', Tools::getValue('PS_TILLIT_PRODUCT_TYPE'));
         Configuration::updateValue('PS_TILLIT_DAY_ON_INVOICE', Tools::getValue('PS_TILLIT_DAY_ON_INVOICE'));
 
@@ -708,17 +709,17 @@ class Tillit extends PaymentModule
                             'name' => 'name'
                         )
                     ),
-                /* array(
-                  'type' => 'select',
-                  'name' => 'PS_TILLIT_OS_REFUND',
-                  'label' => $this->l('Order status when order is refunded'),
-                  'required' => true,
-                  'options' => array(
-                  'query' => $orderStates,
-                  'id' => 'id_order_state',
-                  'name' => 'name'
-                  )
-                  ), */
+                    array(
+                        'type' => 'select',
+                        'name' => 'PS_TILLIT_OS_REFUND',
+                        'label' => $this->l('Order status when order is refunded'),
+                        'required' => true,
+                        'options' => array(
+                            'query' => $orderStates,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        )
+                    ),
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -752,71 +753,84 @@ class Tillit extends PaymentModule
         $this->output .= $this->displayConfirmation($this->l('Order status settings are updated.'));
     }
 
+    public function hookActionOrderEdited($params)
+    {
+        $order = $params['order'];
+        if ($order->module == $this->name) {
+            $orderpaymentdata = $this->getTillitOrderPaymentData($order->id);
+            if ($orderpaymentdata && isset($orderpaymentdata['tillit_order_id'])) {
+                $tillit_order_id = $orderpaymentdata['tillit_order_id'];
+                $paymentdata = $this->getTillitUpdateOrderData($order, $orderpaymentdata);
+                $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, $paymentdata, 'PUT');
+            }
+        }
+    }
+
     public function hookActionOrderStatusUpdate($params)
     {
         $id_order = $params['id_order'];
         $order = new Order((int) $id_order);
         $new_order_status = $params['newOrderStatus'];
-        if ($order->module != $this->name) {
-            return;
-        }
-        $orderpaymentdata = $this->getTillitOrderPaymentData($id_order);
-        if ($orderpaymentdata && isset($orderpaymentdata['tillit_order_id'])) {
-            $tillit_order_id = $orderpaymentdata['tillit_order_id'];
+        if ($order->module == $this->name) {
 
-            if ($new_order_status->id == Configuration::get('PS_TILLIT_OS_CANCELED')) {
-                $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/cancel');
-                $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, [], 'GET');
-                if (isset($response['id']) && $response['id']) {
-                    $payment_data = array(
-                        'tillit_order_id' => $response['id'],
-                        'tillit_order_reference' => $response['merchant_reference'],
-                        'tillit_order_state' => $response['state'],
-                        'tillit_order_status' => $response['status'],
-                        'tillit_day_on_invoice' => $this->day_on_invoice,
-                        'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
-                    );
-                }
-                $this->setTillitOrderPaymentData($id_order, $payment_data);
-            } else if ($new_order_status->id == Configuration::get('PS_TILLIT_OS_DELIVERED')) {
-                $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/delivered');
-                $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, [], 'GET');
-                if (isset($response['id']) && $response['id']) {
-                    $payment_data = array(
-                        'tillit_order_id' => $response['id'],
-                        'tillit_order_reference' => $response['merchant_reference'],
-                        'tillit_order_state' => $response['state'],
-                        'tillit_order_status' => $response['status'],
-                        'tillit_day_on_invoice' => $this->day_on_invoice,
-                        'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
-                    );
-                }
-                $this->setTillitOrderPaymentData($id_order, $payment_data);
-            } else if (($new_order_status->id == Configuration::get('PS_TILLIT_OS_SHIPPING')) && $this->finalize_purchase_shipping) {
-                $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/fulfilled');
-                if (isset($response['id']) && $response['id']) {
-                    $payment_data = array(
-                        'tillit_order_id' => $response['id'],
-                        'tillit_order_reference' => $response['merchant_reference'],
-                        'tillit_order_state' => $response['state'],
-                        'tillit_order_status' => $response['status'],
-                        'tillit_day_on_invoice' => $this->day_on_invoice,
-                        'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
-                    );
-                }
-                $this->setTillitOrderPaymentData($id_order, $payment_data);
-            } else if (($new_order_status->id == Configuration::get('PS_TILLIT_OS_REFUND')) && $this->enable_buyer_refund) {
-                $paymentdata = $this->getTillitNewRefundData($order);
-                $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/refund', $paymentdata);
-                if (isset($response['id']) && $response['id']) {
-                    $payment_data = array(
-                        'tillit_order_id' => $response['id'],
-                        'tillit_order_reference' => $response['merchant_reference'],
-                        'tillit_order_state' => $response['state'],
-                        'tillit_order_status' => $response['status'],
-                        'tillit_day_on_invoice' => $this->day_on_invoice,
-                        'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
-                    );
+            $orderpaymentdata = $this->getTillitOrderPaymentData($id_order);
+            if ($orderpaymentdata && isset($orderpaymentdata['tillit_order_id'])) {
+                $tillit_order_id = $orderpaymentdata['tillit_order_id'];
+
+                if ($new_order_status->id == Configuration::get('PS_TILLIT_OS_CANCELED')) {
+                    $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/cancel', [], 'POST');
+                    $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, [], 'GET');
+                    if (isset($response['id']) && $response['id']) {
+                        $payment_data = array(
+                            'tillit_order_id' => $response['id'],
+                            'tillit_order_reference' => $response['merchant_reference'],
+                            'tillit_order_state' => $response['state'],
+                            'tillit_order_status' => $response['status'],
+                            'tillit_day_on_invoice' => $this->day_on_invoice,
+                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                        );
+                    }
+                    $this->setTillitOrderPaymentData($id_order, $payment_data);
+                } else if ($new_order_status->id == Configuration::get('PS_TILLIT_OS_DELIVERED')) {
+                    $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/delivered', [], 'POST');
+                    $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, [], 'GET');
+                    if (isset($response['id']) && $response['id']) {
+                        $payment_data = array(
+                            'tillit_order_id' => $response['id'],
+                            'tillit_order_reference' => $response['merchant_reference'],
+                            'tillit_order_state' => $response['state'],
+                            'tillit_order_status' => $response['status'],
+                            'tillit_day_on_invoice' => $this->day_on_invoice,
+                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                        );
+                    }
+                    $this->setTillitOrderPaymentData($id_order, $payment_data);
+                } else if (($new_order_status->id == Configuration::get('PS_TILLIT_OS_SHIPPING')) && $this->finalize_purchase_shipping) {
+                    $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/fulfilled', [], 'POST');
+                    if (isset($response['id']) && $response['id']) {
+                        $payment_data = array(
+                            'tillit_order_id' => $response['id'],
+                            'tillit_order_reference' => $response['merchant_reference'],
+                            'tillit_order_state' => $response['state'],
+                            'tillit_order_status' => $response['status'],
+                            'tillit_day_on_invoice' => $this->day_on_invoice,
+                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                        );
+                    }
+                    $this->setTillitOrderPaymentData($id_order, $payment_data);
+                } else if (($new_order_status->id == Configuration::get('PS_TILLIT_OS_REFUND')) && $this->enable_buyer_refund) {
+                    $paymentdata = $this->getTillitNewRefundData($order);
+                    $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/refund', $paymentdata, ['POST']);
+                    if (isset($response['id']) && $response['id']) {
+                        $payment_data = array(
+                            'tillit_order_id' => $response['id'],
+                            'tillit_order_reference' => $response['merchant_reference'],
+                            'tillit_order_state' => $response['state'],
+                            'tillit_order_status' => $response['status'],
+                            'tillit_day_on_invoice' => $this->day_on_invoice,
+                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                        );
+                    }
                 }
             }
         }
@@ -831,9 +845,8 @@ class Tillit extends PaymentModule
                 'company_id_search' => $this->enable_company_id,
                 'merchant_id' => $this->merchant_id,
         )));
-        $this->context->controller->addJqueryUi('ui.autocomplete');
-        $this->context->controller->registerStylesheet('tillit-select2', 'modules/tillit/views/css/select2.min.css', array('priority' => 200, 'media' => 'all'));
-        $this->context->controller->registerJavascript('tillit-select2', 'modules/tillit/views/js/select2.min.js', array('priority' => 200, 'attribute' => 'async'));
+        $this->context->controller->addJqueryUI('ui.autocomplete');
+        $this->context->controller->registerStylesheet('tillit-css', 'modules/tillit/views/css/tillit.css', array('priority' => 200, 'media' => 'all'));
         $this->context->controller->registerJavascript('tillit-script', 'modules/tillit/views/js/tillit.js', array('priority' => 200, 'attribute' => 'async'));
     }
 
@@ -845,14 +858,6 @@ class Tillit extends PaymentModule
 
         if (Tools::isEmpty($this->merchant_id) || Tools::isEmpty($this->api_key)) {
             return;
-        }
-
-        //check Pre-approve buyer for enable payment method
-        if ($this->enable_order_intent) {
-            $approval_buyer = $this->getTillitApprovalBuyer();
-            if (!$approval_buyer) {
-                return;
-            }
         }
 
         $payment_options = [
@@ -873,9 +878,18 @@ class Tillit extends PaymentModule
         if (Tools::isEmpty($subtitle)) {
             $subtitle = $this->l('Receive the invoice via EHF and PDF');
         }
-
+        
+        //check Pre-approve buyer for enable payment method
+        if ($this->enable_order_intent) {
+            
+        }
+        
+        $approval_data = $this->getTillitApprovalBuyer();
+        
         $this->context->smarty->assign(array(
             'subtitle' => $subtitle,
+            'payment_enable' => $approval_data['approval'],
+            'message' => $approval_data['message'],
         ));
 
         $preTillitOption = new PaymentOption();
@@ -883,7 +897,7 @@ class Tillit extends PaymentModule
             ->setCallToActionText($title)
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', array(), true))
             ->setInputs(['token' => ['name' => 'token', 'type' => 'hidden', 'value' => Tools::getToken(false)]])
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'tillit/views/img/tillit.SVG'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'tillit/views/img/tillit.png'))
             ->setAdditionalInformation($this->context->smarty->fetch('module:tillit/views/templates/hook/paymentinfo.tpl'));
 
         return $preTillitOption;
@@ -897,12 +911,12 @@ class Tillit extends PaymentModule
             $this->setTillitPaymentRequest("/v1/merchant/" . $this->merchant_id . "/update", [
                 'merchant_id' => $this->merchant_id,
                 'logo_path' => $logo_path
-            ]);
+            ], 'POST');
         } else {
             $this->setTillitPaymentRequest("/v1/merchant/" . $this->merchant_id . "/update", [
                 'merchant_id' => $this->merchant_id,
                 'logo_path' => ''
-            ]);
+            ], 'POST');
         }
     }
 
@@ -912,12 +926,36 @@ class Tillit extends PaymentModule
         $cutomer = new Customer($cart->id_customer);
         $currency = new Currency($cart->id_currency);
         $address = new Address($cart->id_address_invoice);
-
+        
         if ($address->account_type == 'personal') {
-            return false;
+            $data = array(
+                'approval' => false,
+                'message' => $this->l('Enter company name to pay on invoice.'),
+            );
+        } else {
+            $paymentdata = $this->getTillitIntentOrderData($cart, $cutomer, $currency, $address);
+            $response = $this->setTillitPaymentRequest("/v1/order_intent", $paymentdata, 'POST');
+            $tillit_err = $this->getTillitErrorMessage($response);
+            
+            if ($tillit_err) {
+                $data = array(
+                    'approval' => false,
+                    'message' => $tillit_err,
+                );
+            } else {
+                $data = array(
+                    'approval' => true,
+                    'message' => sprintf($this->l('By completing the purchase, you verify that you have the legal right to purchase on behalf of %s'), '<strong>'.$address->company.'</strong>'),
+                );
+            }
         }
+        
+        return $data;
+    }
 
-        $data = $this->setTillitPaymentRequest("/v1/order_intent", [
+    public function getTillitIntentOrderData($cart, $cutomer, $currency, $address)
+    {
+        $request_data = array(
             'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
             'buyer' => array(
                 'company' => array(
@@ -958,17 +996,9 @@ class Tillit extends PaymentModule
                     ),
                 )
             ),
-        ]);
-
-        if (isset($data['approved']) && $data['approved']) {
-            return true;
-        }
-        return false;
-    }
-
-    public function getTillitRoundAmount($amount)
-    {
-        return number_format($amount, 2, '.', '');
+        );
+        
+        return $request_data;
     }
 
     public function getTillitNewOrderData($cart)
@@ -1060,6 +1090,66 @@ class Tillit extends PaymentModule
             ),
         );
 
+        return $request_data;
+    }
+
+    public function getTillitUpdateOrderData($order, $orderpaymentdata)
+    {
+        $cart = new Cart($order->id_cart);
+        $cutomer = new Customer($cart->id_customer);
+        $currency = new Currency($cart->id_currency);
+        $invoice_address = new Address($cart->id_address_invoice);
+        $delivery_address = new Address($cart->id_address_delivery);
+        $carrier_name = '';
+        $tracking_number = '';
+        $carrier = new Carrier($cart->id_carrier, $cart->id_lang);
+        if (Validate::isLoadedObject($carrier)) {
+            $carrier_name = $carrier->name;
+        }
+
+        $request_data = array(
+            'buyer_department' => $invoice_address->department,
+            'buyer_project' => $invoice_address->project,
+            'line_items' => $this->getTillitProductItems($cart),
+            'merchant_reference' => strval($orderpaymentdata['tillit_order_reference']),
+            'merchant_additional_info' => '',
+            'recurring' => false,
+            'order_note' => '',
+            'payment' => array(
+                'currency' => $currency->iso_code,
+                'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+                'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+                'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+                'tax_rate' => strval($cart->getAverageProductsTaxRate()),
+                'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+                'discount_rate' => '0',
+                'discount_rate' => '0',
+                'type' => $this->product_type,
+            ),
+            'shipping_details' => array(
+                'carrier_name' => $carrier_name,
+                'tracking_number' => $tracking_number,
+                // 'carrier_tracking_url' => '',
+                'expected_delivery_date' => date('Y-m-d', strtotime('+ 7 days'))
+            ),
+            'billing_address' => array(
+                'city' => $invoice_address->city,
+                'country' => Country::getIsoById($invoice_address->id_country),
+                'organization_name' => $invoice_address->company,
+                'postal_code' => $invoice_address->postcode,
+                'region' => $invoice_address->id_state ? State::getNameById($invoice_address->id_state) : "",
+                'street_address' => $invoice_address->address1 . (isset($invoice_address->address2) ? $invoice_address->address2 : "")
+            ),
+            'shipping_address' => array(
+                'city' => $delivery_address->city,
+                'country' => Country::getIsoById($delivery_address->id_country),
+                'organization_name' => $delivery_address->company,
+                'postal_code' => $delivery_address->postcode,
+                'region' => $delivery_address->id_state ? State::getNameById($delivery_address->id_state) : "",
+                'street_address' => $delivery_address->address1 . (isset($delivery_address->address2) ? $delivery_address->address2 : "")
+            ),
+        );
+        
         return $request_data;
     }
 
@@ -1168,6 +1258,11 @@ class Tillit extends PaymentModule
 
         return $items;
     }
+    
+    public function getTillitRoundAmount($amount)
+    {
+        return number_format($amount, 2, '.', '');
+    }
 
     public function getTillitSearchHostUrl()
     {
@@ -1200,6 +1295,7 @@ class Tillit extends PaymentModule
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
             $response = curl_exec($ch);
             $response = json_decode($response, true);
             $info = curl_getinfo($ch);
@@ -1220,11 +1316,13 @@ class Tillit extends PaymentModule
             curl_setopt($ch, CURLOPT_TIMEOUT, 60);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
             $response = curl_exec($ch);
             $response = json_decode($response, true);
             $info = curl_getinfo($ch);
             curl_close($ch);
         }
+        
         return $response;
     }
 
@@ -1332,6 +1430,7 @@ class Tillit extends PaymentModule
     {
         $id_order = $params['id_order'];
         $tillitpaymentdata = $this->getTillitOrderPaymentData($id_order);
+       
         if ($tillitpaymentdata) {
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
