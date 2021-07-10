@@ -66,6 +66,23 @@
                 </p>
             {/if}
         </div>
+    {else if $input.type == 'password'}
+        <div class="col-lg-9">
+            <input type="password"
+                   id="{if isset($input.id)}{$input.id}{else}{$input.name}{/if}"
+                   name="{$input.name}"
+                   class="{if isset($input.class)}{$input.class}{/if}"
+                   value="{$fields_value[$input.name]}"
+                   {if isset($input.autocomplete) && !$input.autocomplete}autocomplete="off"{/if}
+                   {if isset($input.required) && $input.required } required="required" {/if} />
+
+            {if isset($input.desc) && !empty($input.desc)}
+                <p class="help-block">
+                    {$input.desc}
+                </p>
+            {/if}
+        </div>
+
     {else}
         {$smarty.block.parent}
     {/if}

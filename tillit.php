@@ -74,6 +74,7 @@ class Tillit extends PaymentModule
             $this->registerHook('displayOrderDetail') &&
             $this->registerHook('actionOrderSlipAdd') &&
             $this->registerHook('actionOrderEdited') &&
+            $this->registerHook('actionAdminOrdersTrackingNumberUpdate') &&
             $this->installTillitSettings() &&
             $this->createTillitOrderState() &&
             $this->createTillitTables();
@@ -179,6 +180,7 @@ class Tillit extends PaymentModule
             $this->unregisterHook('displayOrderDetail') &&
             $this->unregisterHook('actionOrderSlipAdd') &&
             $this->unregisterHook('actionOrderEdited') &&
+            $this->unregisterHook('actionAdminOrdersTrackingNumberUpdate') &&
             $this->uninstallTillitSettings() &&
             $this->deleteTillitTables();
     }
@@ -318,7 +320,7 @@ class Tillit extends PaymentModule
                         'desc' => $this->l('Enter your merchant id which is provided by tillit.'),
                     ),
                     array(
-                        'type' => 'text',
+                        'type' => 'password',
                         'label' => $this->l('Api key'),
                         'name' => 'PS_TILLIT_MERACHANT_API_KEY',
                         'required' => true,
@@ -756,6 +758,14 @@ class Tillit extends PaymentModule
     public function hookActionOrderEdited($params)
     {
         $order = $params['order'];
+        $cart = new Cart($order->id_cart);
+        $payment = $order->getOrderPaymentCollection();
+        if (isset($payment[0]))
+        {
+            $payment[0]->amount = $cart->getOrderTotal(true, Cart::BOTH);
+            $payment[0]->save();
+        }
+        
         if ($order->module == $this->name) {
             $orderpaymentdata = $this->getTillitOrderPaymentData($order->id);
             if ($orderpaymentdata && isset($orderpaymentdata['tillit_order_id'])) {
@@ -881,16 +891,22 @@ class Tillit extends PaymentModule
         
         //check Pre-approve buyer for enable payment method
         if ($this->enable_order_intent) {
+            $approval_data = $this->getTillitApprovalBuyer();
             
+            $this->context->smarty->assign(array(
+                'subtitle' => $subtitle,
+                'enable_order_intent' => true,
+                'payment_enable' => $approval_data['approval'],
+                'message' => $approval_data['message'],
+            ));
+        } else {
+            $this->context->smarty->assign(array(
+                'subtitle' => $subtitle,
+                'enable_order_intent' => false,
+                'payment_enable' => false,
+                'message' => '',
+            ));
         }
-        
-        $approval_data = $this->getTillitApprovalBuyer();
-        
-        $this->context->smarty->assign(array(
-            'subtitle' => $subtitle,
-            'payment_enable' => $approval_data['approval'],
-            'message' => $approval_data['message'],
-        ));
 
         $preTillitOption = new PaymentOption();
         $preTillitOption->setModuleName($this->name)
@@ -935,12 +951,21 @@ class Tillit extends PaymentModule
         } else {
             $paymentdata = $this->getTillitIntentOrderData($cart, $cutomer, $currency, $address);
             $response = $this->setTillitPaymentRequest("/v1/order_intent", $paymentdata, 'POST');
+            
             $tillit_err = $this->getTillitErrorMessage($response);
             
             if ($tillit_err) {
+                
+                if($this->checkTillitStartsWithString($tillit_err, '1 validation error for CreateOrderIntentRequestSchema: buyer -> company -> organization_number')) {
+                    $error = $this->l('Your Complanay organization number is not valid. Please check your address.');
+                } else if ($this->checkTillitStartsWithString($tillit_err, '1 validation error for CreateOrderIntentRequestSchema: buyer -> representative -> phone_number')) {
+                    $error = $this->l('Please use phone format +47 99999999');
+                } else {
+                    $error = $tillit_err;
+                }
                 $data = array(
                     'approval' => false,
-                    'message' => $tillit_err,
+                    'message' => $error,
                 );
             } else {
                 $data = array(
@@ -1324,6 +1349,12 @@ class Tillit extends PaymentModule
         }
         
         return $response;
+    }
+    
+    public function checkTillitStartsWithString($string, $startString) 
+    { 
+        $len = strlen($startString); 
+        return (substr($string, 0, $len) === $startString); 
     }
 
     public static function getTillitErrorMessage($body)
