@@ -960,8 +960,12 @@ class Tillit extends PaymentModule
                     $error = $this->l('Your Complanay organization number is not valid. Please check your address.');
                 } else if ($this->checkTillitStartsWithString($tillit_err, '1 validation error for CreateOrderIntentRequestSchema: buyer -> representative -> phone_number')) {
                     $error = $this->l('Please use phone format +47 99999999');
+                } else if ($this->checkTillitStartsWithString($tillit_err, 'Minimum Payment using Tillit')) {
+                    $error = $this->l('Minimum Payment using Tillit is 200 NOK');
+                } else if ($this->checkTillitStartsWithString($tillit_err, 'Maximum Payment using Tillit')) {
+                    $error = $this->l('Minimum Payment using Tillit is 250,000 NOK');
                 } else {
-                    $error = $tillit_err;
+                    $error = $this->l('Your Complanay organization number is not valid. Please check your address.');
                 }
                 $data = array(
                     'approval' => false,
