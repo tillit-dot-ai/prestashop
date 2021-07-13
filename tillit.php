@@ -963,7 +963,7 @@ class Tillit extends PaymentModule
                 } else if ($this->checkTillitStartsWithString($tillit_err, 'Minimum Payment using Tillit')) {
                     $error = $this->l('Minimum Payment using Tillit is 200 NOK');
                 } else if ($this->checkTillitStartsWithString($tillit_err, 'Maximum Payment using Tillit')) {
-                    $error = $this->l('Minimum Payment using Tillit is 250,000 NOK');
+                    $error = $this->l('Maximum Payment using Tillit is 250,000 NOK');
                 } else {
                     $error = $this->l('Your Complanay organization number is not valid. Please check your address.');
                 }
