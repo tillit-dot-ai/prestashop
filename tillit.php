@@ -141,11 +141,12 @@ class Tillit extends PaymentModule
     protected function createTillitTables()
     {
         $sql = array();
+          
         $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `account_type` VARCHAR(255) NULL';
         $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `companyid` VARCHAR(255) NULL';
         $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `department` VARCHAR(255) NULL';
         $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `project` VARCHAR(255) NULL';
-
+        
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'tillit` (
             `id_tillit` int(11) NOT NULL AUTO_INCREMENT,
             `id_order` INT( 11 ) UNSIGNED,
@@ -955,11 +956,14 @@ class Tillit extends PaymentModule
             $tillit_err = $this->getTillitErrorMessage($response);
             
             if ($tillit_err) {
-                
                 if($this->checkTillitStartsWithString($tillit_err, '1 validation error for CreateOrderIntentRequestSchema: buyer -> company -> organization_number')) {
                     $error = $this->l('Your Complanay organization number is not valid. Please check your address.');
                 } else if ($this->checkTillitStartsWithString($tillit_err, '1 validation error for CreateOrderIntentRequestSchema: buyer -> representative -> phone_number')) {
                     $error = $this->l('Please use phone format +47 99999999');
+                } else if ($this->checkTillitStartsWithString($tillit_err, 'Minimum Payment using Tillit')) {
+                    $error = $this->l('Minimum Payment using Tillit is 200 NOK');
+                } else if ($this->checkTillitStartsWithString($tillit_err, 'Maximum Payment using Tillit')) {
+                    $error = $this->l('Maximum Payment using Tillit is 250,000 NOK');
                 } else {
                     $error = $tillit_err;
                 }
