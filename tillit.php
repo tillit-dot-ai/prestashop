@@ -221,11 +221,6 @@ class Tillit extends PaymentModule
     protected function deleteTillitTables()
     {
         $sql = array();
-        //$sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `account_type`';
-        //$sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `companyid`';
-        //$sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `department`';
-        //$sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `project`';
-
         foreach ($sql as $query) {
             if (Db::getInstance()->execute($query) == false) {
                 return false;
