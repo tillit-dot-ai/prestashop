@@ -141,11 +141,24 @@ class Tillit extends PaymentModule
     protected function createTillitTables()
     {
         $sql = array();
-          
-        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `account_type` VARCHAR(255) NULL';
-        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `companyid` VARCHAR(255) NULL';
-        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `department` VARCHAR(255) NULL';
-        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `project` VARCHAR(255) NULL';
+        $columns = Db::getInstance()->executeS('DESCRIBE `' . _DB_PREFIX_ . 'address`');
+        $fileds = array();
+        foreach($columns as $column){
+            $fileds[] = $column['Field'];
+        }
+        
+        if(!in_array('account_type', $fileds)) {
+            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `account_type` VARCHAR(255)';
+        }
+        if(!in_array('companyid', $fileds)) {
+            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `companyid` VARCHAR(255)';
+        }
+        if(!in_array('department', $fileds)) {
+            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `department` VARCHAR(255)';
+        }
+        if(!in_array('project', $fileds)) {
+            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` ADD COLUMN `project` VARCHAR(255)';
+        }
         
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'tillit` (
             `id_tillit` int(11) NOT NULL AUTO_INCREMENT,
@@ -208,10 +221,10 @@ class Tillit extends PaymentModule
     protected function deleteTillitTables()
     {
         $sql = array();
-        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `account_type`';
-        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `companyid`';
-        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `department`';
-        $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `project`';
+        //$sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `account_type`';
+        //$sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `companyid`';
+        //$sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `department`';
+        //$sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'address` DROP COLUMN `project`';
 
         foreach ($sql as $query) {
             if (Db::getInstance()->execute($query) == false) {

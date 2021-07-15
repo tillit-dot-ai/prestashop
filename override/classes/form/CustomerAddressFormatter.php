@@ -101,7 +101,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
 
                 if (Configuration::get('PS_TILLIT_ENABLE_COMPANY_NAME')) {
                     if ($field === 'company') {
-                        $formField->addAvailableValue('placeholder', $this->translator->trans('Search your compnay name', [], 'Shop.Forms.Labels'));
+                        $formField->addAvailableValue('placeholder', $this->translator->trans('Search your company name', [], 'Shop.Forms.Labels'));
                     }
                 }
                 if (count($fieldParts) === 1) {
@@ -310,7 +310,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
             case 'business_type':
                 return $this->translator->trans('Business', [], 'Shop.Forms.Labels');
             case 'companyid':
-                return $this->translator->trans('Company Id', [], 'Shop.Forms.Labels');
+                return $this->translator->trans('Company ID', [], 'Shop.Forms.Labels');
             case 'department':
                 return $this->translator->trans('Department', [], 'Shop.Forms.Labels');
             case 'project':
