@@ -323,10 +323,10 @@ class Tillit extends PaymentModule
                     ),
                     array(
                         'type' => 'text',
-                        'label' => $this->l('Merchant id'),
+                        'label' => $this->l('Merchant short name'),
                         'name' => 'PS_TILLIT_MERACHANT_ID',
                         'required' => true,
-                        'desc' => $this->l('Enter your merchant id which is provided by tillit.'),
+                        'desc' => $this->l('Enter your merchant short name which is provided by tillit.'),
                     ),
                     array(
                         'type' => 'password',
@@ -399,7 +399,7 @@ class Tillit extends PaymentModule
             }
         }
         if (Tools::isEmpty(Tools::getValue('PS_TILLIT_MERACHANT_ID'))) {
-            $this->errors[] = $this->l('Enter a merchant id.');
+            $this->errors[] = $this->l('Enter a merchant short name.');
         }
         if (Tools::isEmpty(Tools::getValue('PS_TILLIT_MERACHANT_API_KEY'))) {
             $this->errors[] = $this->l('Enter a api key.');
@@ -1318,10 +1318,7 @@ class Tillit extends PaymentModule
             $params = empty($payload) ? '' : json_encode($payload);
             $headers = [
                 'Content-Type: application/json; charset=utf-8',
-                'Tillit-Merchant-Id:' . $this->merchant_id,
-                'Authorization:' . sprintf('Basic %s', base64_encode(
-                        $this->merchant_id . ':' . $this->api_key
-                ))
+                'X-API-Key:' . $this->api_key,
             ];
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
@@ -1341,10 +1338,7 @@ class Tillit extends PaymentModule
             $url = sprintf('%s%s', $this->getTillitCheckoutHostUrl(), $endpoint);
             $headers = [
                 'Content-Type: application/json; charset=utf-8',
-                'Tillit-Merchant-Id:' . $this->merchant_id,
-                'Authorization:' . sprintf('Basic %s', base64_encode(
-                        $this->merchant_id . ':' . $this->api_key
-                ))
+                'X-API-Key:' . $this->api_key,
             ];
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
