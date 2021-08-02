@@ -17,20 +17,14 @@
  * International Registered Trademark & Property of PrestaShop SA
  */
 
-const tillitRequiredField = '<abbr class="required" title="required">*</abbr>'
-const tillitSearchLimit = 50
-
-let tillitWithCompanySearch = null
-let tillitSearchCache
-
-
 class Tillit {
 
     constructor()
     {
         const $body = jQuery(document.body);
         const $checkout = jQuery('.js-address-form');
-        
+        const id_country = $('select[name="id_country"]').val();
+
         if ($checkout.length === 0) {
             return;
         }
@@ -39,18 +33,16 @@ class Tillit {
 
         if (tillit.company_name_search === '1') {
 
-            //const $billingCompany = $checkout.find('select[name="company"]');
             const $billingCompany = $checkout.find('input[name="company"]');
 
             if ($billingCompany.length) {
                 $billingCompany.autocomplete({
                     minLength: 3,
                     minLength: function (event, ui) {
-
                     },
                     source: function (request, response) {
                         $.ajax({
-                            url: tillit.tillit_search_host + '/search?limit=' + tillitSearchLimit + '&offset=0',
+                            url: 'https://' + tillit.countries[id_country] + '.search.tillit.ai/search?limit=50&offset=0',
                             dataType: "json",
                             delay: 200,
                             data: {
@@ -65,18 +57,22 @@ class Tillit {
                                             items.push({
                                                 value: item.name,
                                                 label: item.highlight + ' (' + item.id + ')',
-                                                company_id: item.id,
+                                                company_id: item.id
                                             })
                                         }
                                     } else {
                                         items.push({
                                             value: '',
-                                            label: 'No result found',
+                                            label: tillit.search_empty_text
                                         })
                                     }
                                     response(items);
                                 } else {
-                                    alert(results);
+                                    var items = [];
+                                    items.push({
+                                        value: '',
+                                        label: tillit.search_empty_text
+                                    })
                                 }
                             },
 
@@ -89,22 +85,16 @@ class Tillit {
                             $("input[name='companyid']").val(ui.item.company_id);
                         }
 
-                        const addressResponse = jQuery.ajax({
-                            dataType: 'json',
-                            url: tillit.tillit_checkout_host + '/v1/company/' + ui.item.company_id + '/address'
-                        });
-
-                        addressResponse.done(function (response) {
-                            if (response.company_location) {
-
-                                const companyLocation = response.company_location;
-
-                                $("input[name='address1']").val(companyLocation.street_address);
-
-                                $("input[name='city']").val(companyLocation.municipality_name);
-
-                                $("input[name='postcode']").val(companyLocation.postal_code);
-                            }
+                        $.ajax({
+                            url: tillit.checkout_host + '/v1/' + tillit.countries[id_country] + '/company/' + ui.item.company_id + '/address?client=' + tillit.client + '&client_v=' + tillit.client_version,
+                            dataType: "json",
+                            success: function (response) {
+                                if (response.address) {
+                                    $("input[name='address1']").val(response.address.streetAddress);
+                                    $("input[name='city']").val(response.address.city);
+                                    $("input[name='postcode']").val(response.address.postalCode);
+                                }
+                            },
                         });
                     }
                 }).data("ui-autocomplete")._renderItem = function (ul, item) {
@@ -133,23 +123,21 @@ class Tillit {
     static toggleCompanyFields(value)
     {
         if (value === "business") {
-            //Comapny set data
+
             $("input[name='company']").prop('required', true);
             $("input[name='company']").closest(".form-group").show();
             $("input[name='company']").closest(".form-group").children('.form-control-comment').hide();
 
-            //Comapny set data
             $("input[name='companyid']").prop('required', true);
             $("input[name='companyid']").closest(".form-group").show();
             $("input[name='companyid']").closest(".form-group").children('.form-control-comment').hide();
 
         } else {
-            //Comapny set data
+
             $("input[name='company']").prop('required', false);
             $("input[name='company']").closest(".form-group").hide();
             $("input[name='company']").closest(".form-group").children('.form-control-comment').show();
 
-            //Comapny id set data
             $("input[name='companyid']").prop('required', false);
             $("input[name='companyid']").closest(".form-group").hide();
             $("input[name='companyid']").closest(".form-group").children('.form-control-comment').show();
