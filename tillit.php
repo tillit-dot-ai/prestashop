@@ -1076,7 +1076,7 @@ class Tillit extends PaymentModule
             'buyer_department' => $invoice_address->department,
             'buyer_project' => $invoice_address->project,
             'line_items' => $this->getTillitProductItems($cart),
-            'merchant_order_id' => '',
+            'merchant_order_id' => strval($this->getTillitNextOrderID()),
             'merchant_reference' => strval($order_reference),
             'merchant_additional_info' => '',
             'merchant_id' => $this->merchant_id,
@@ -1132,7 +1132,7 @@ class Tillit extends PaymentModule
                 'street_address' => $delivery_address->address1 . (isset($delivery_address->address2) ? $delivery_address->address2 : "")
             ),
         );
-
+        
         return $request_data;
     }
 
@@ -1412,6 +1412,12 @@ class Tillit extends PaymentModule
             );
             Db::getInstance()->insert('tillit', $data);
         }
+    }
+    
+    public function getTillitNextOrderID()
+    {
+        $id_order = Db::getInstance()->getValue('SELECT o.id_order FROM `' . _DB_PREFIX_ . 'orders` o' . Shop::addSqlAssociation('orders', 'o') . ' ORDER BY o.id_order DESC', false);
+        return $id_order + 1;
     }
 
     public function getTillitOrderPaymentData($id_order)
