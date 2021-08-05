@@ -103,6 +103,7 @@ class Tillit extends PaymentModule
         Configuration::updateValue('PS_TILLIT_OS_PREPARATION', Configuration::get('PS_OS_PREPARATION'));
         Configuration::updateValue('PS_TILLIT_OS_SHIPPING', Configuration::get('PS_OS_SHIPPING'));
         Configuration::updateValue('PS_TILLIT_OS_DELIVERED', Configuration::get('PS_OS_DELIVERED'));
+        Configuration::updateValue('PS_TILLIT_OS_ERROR', Configuration::get('PS_OS_ERROR'));
         Configuration::updateValue('PS_TILLIT_OS_CANCELED', Configuration::get('PS_OS_CANCELED'));
         Configuration::updateValue('PS_TILLIT_OS_REFUND', Configuration::get('PS_OS_REFUND'));
         return true;
@@ -711,6 +712,17 @@ class Tillit extends PaymentModule
                     ),
                     array(
                         'type' => 'select',
+                        'name' => 'PS_TILLIT_OS_ERROR',
+                        'label' => $this->l('Order status when order is payment error'),
+                        'required' => true,
+                        'options' => array(
+                            'query' => $orderStates,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        )
+                    ),
+                    array(
+                        'type' => 'select',
                         'name' => 'PS_TILLIT_OS_CANCELED',
                         'label' => $this->l('Order status when order is canceled'),
                         'required' => true,
@@ -747,6 +759,7 @@ class Tillit extends PaymentModule
         $fields_values['PS_TILLIT_OS_PREPARATION'] = Tools::getValue('PS_TILLIT_OS_PREPARATION', Configuration::get('PS_TILLIT_OS_PREPARATION'));
         $fields_values['PS_TILLIT_OS_SHIPPING'] = Tools::getValue('PS_TILLIT_OS_SHIPPING', Configuration::get('PS_TILLIT_OS_SHIPPING'));
         $fields_values['PS_TILLIT_OS_DELIVERED'] = Tools::getValue('PS_TILLIT_OS_DELIVERED', Configuration::get('PS_TILLIT_OS_DELIVERED'));
+        $fields_values['PS_TILLIT_OS_ERROR'] = Tools::getValue('PS_TILLIT_OS_ERROR', Configuration::get('PS_TILLIT_OS_ERROR'));
         $fields_values['PS_TILLIT_OS_CANCELED'] = Tools::getValue('PS_TILLIT_OS_CANCELED', Configuration::get('PS_TILLIT_OS_CANCELED'));
         $fields_values['PS_TILLIT_OS_REFUND'] = Tools::getValue('PS_TILLIT_OS_REFUND', Configuration::get('PS_TILLIT_OS_REFUND'));
         return $fields_values;
@@ -758,6 +771,7 @@ class Tillit extends PaymentModule
         Configuration::updateValue('PS_TILLIT_OS_PREPARATION', Tools::getValue('PS_TILLIT_OS_PREPARATION'));
         Configuration::updateValue('PS_TILLIT_OS_SHIPPING', Tools::getValue('PS_TILLIT_OS_SHIPPING'));
         Configuration::updateValue('PS_TILLIT_OS_DELIVERED', Tools::getValue('PS_TILLIT_OS_DELIVERED'));
+        Configuration::updateValue('PS_TILLIT_OS_ERROR', Tools::getValue('PS_TILLIT_OS_ERROR'));
         Configuration::updateValue('PS_TILLIT_OS_CANCELED', Tools::getValue('PS_TILLIT_OS_CANCELED'));
         Configuration::updateValue('PS_TILLIT_OS_REFUND', Tools::getValue('PS_TILLIT_OS_REFUND'));
 
@@ -1044,9 +1058,9 @@ class Tillit extends PaymentModule
         return $request_data;
     }
 
-    public function getTillitNewOrderData($cart)
+    public function getTillitNewOrderData($id_order, $cart)
     {
-        $order_reference = $cart->id . '_' . round(microtime(1) * 1000);
+        $order_reference = round(microtime(1) * 1000);
         $cutomer = new Customer($cart->id_customer);
         $currency = new Currency($cart->id_currency);
         $invoice_address = new Address($cart->id_address_invoice);
@@ -1076,13 +1090,13 @@ class Tillit extends PaymentModule
             'buyer_department' => $invoice_address->department,
             'buyer_project' => $invoice_address->project,
             'line_items' => $this->getTillitProductItems($cart),
-            'merchant_order_id' => strval($this->getTillitNextOrderID()),
+            'merchant_order_id' => strval($id_order),
             'merchant_reference' => strval($order_reference),
             'merchant_additional_info' => '',
             'merchant_id' => $this->merchant_id,
             'merchant_urls' => array(
-                'merchant_confirmation_url' => $this->context->link->getModuleLink($this->name, 'confirmation', array('tillit_order_reference' => $order_reference), true),
-                'merchant_cancel_order_url' => $this->context->link->getModuleLink($this->name, 'cancel', array('tillit_order_reference' => $order_reference), true),
+                'merchant_confirmation_url' => $this->context->link->getModuleLink($this->name, 'confirmation', array('id_order' => $id_order), true),
+                'merchant_cancel_order_url' => $this->context->link->getModuleLink($this->name, 'cancel', array('id_order' => $id_order), true),
                 'merchant_edit_order_url' => '',
                 'merchant_order_verification_failed_url' => '',
                 'merchant_invoice_url' => '',

@@ -57,50 +57,64 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
-        
+
         //Tillit Create order
-        $paymentdata = $this->module->getTillitNewOrderData($cart);
-        
+        $this->module->validateOrder($cart->id, Configuration::get('PS_TILLIT_OS_AWAITING'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, null, array(), (int) $currency->id, false, $customer->secure_key);
+
+        $paymentdata = $this->module->getTillitNewOrderData($this->module->currentOrder, $cart);
+
         $response = $this->module->setTillitPaymentRequest('/v1/order', $paymentdata, 'POST');
-        
-        if(!isset($response)) {
+
+        if (!isset($response)) {
+            $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
             $message = $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
-        
-        if(isset($response['result']) && $response['result'] === 'failure') {
+
+        if (isset($response['result']) && $response['result'] === 'failure') {
+            $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
             $message = $response;
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
-        
-        if(isset($response['response']['code']) && ($response['response']['code'] === 401 || $response['response']['code'] === 403)) {
+
+        if (isset($response['response']['code']) && ($response['response']['code'] === 401 || $response['response']['code'] === 403)) {
+            $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
             $message = $this->module->l('Website is not properly configured with Tillit payment.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
-        
-        if(isset($response['response']['code']) &&  $response['response']['code'] === 400) {
+
+        if (isset($response['response']['code']) && $response['response']['code'] === 400) {
+            $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
             $message = $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
-        
+
         $tillit_err = $this->module->getTillitErrorMessage($response);
         if ($tillit_err) {
+            $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
             $message = ($tillit_err != '') ? $tillit_err : $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
-        
-        if(isset($response['response']['code']) &&  $response['response']['code'] >= 400) {
+
+        if (isset($response['response']['code']) && $response['response']['code'] >= 400) {
+            $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
             $message = $this->module->l('EHF Invoice is not available for this order.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
-        
-        if(isset($response['id']) && $response['id']) {
+
+        if (isset($response['id']) && $response['id']) {
             $payment_data = array(
                 'tillit_order_id' => $response['id'],
                 'tillit_order_reference' => $response['merchant_reference'],
@@ -109,16 +123,38 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
                 'tillit_day_on_invoice' => $this->module->day_on_invoice,
                 'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
             );
-            
-            $this->module->validateOrder($cart->id, Configuration::get('PS_TILLIT_OS_AWAITING'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, null, array(), (int) $currency->id, false, $customer->secure_key);
-            
+
             $this->module->setTillitOrderPaymentData($this->module->currentOrder, $payment_data);
-            
+
             Tools::redirect($response['tillit_urls']['verify_order_url']);
         } else {
+            $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
             $message = $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
+        }
+    }
+
+    protected function restoreDuplicateCart($id_order, $id_customer)
+    {
+        $oldCart = new Cart(Order::getCartIdStatic($id_order, $id_customer));
+        $duplication = $oldCart->duplicate();
+        $this->context->cookie->id_cart = $duplication['cart']->id;
+        $context = $this->context;
+        $context->cart = $duplication['cart'];
+        CartRule::autoAddToCart($context);
+        $this->context->cookie->write();
+    }
+
+    protected function chnageOrderStatus($id_order, $id_order_status)
+    {
+        $order = new Order((int) $id_order);
+        $history = new OrderHistory();
+        $history->id_order = (int) $order->id;
+        if ($order->current_state != (int) $id_order_status) {
+            $history->changeIdOrderState((int) $id_order_status, $order, true);
+            $history->addWithemail(true);
         }
     }
 }

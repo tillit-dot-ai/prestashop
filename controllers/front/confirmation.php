@@ -31,73 +31,43 @@ class TillitConfirmationModuleFrontController extends ModuleFrontController
     {
         parent::postProcess();
 
-        $tillit_order_reference = Tools::getValue('tillit_order_reference');
+        $id_order = Tools::getValue('id_order');
 
-        if (isset($tillit_order_reference) && !Tools::isEmpty($tillit_order_reference)) {
-
-            list($id_cart, ) = explode('_', $tillit_order_reference);
-            $id_order = Order::getOrderByCartId($id_cart);
-
-            if ($id_order) {
-
-                $order = new Order((int) $id_order);
-                $customer = new Customer($order->id_customer);
-
-                $orderpaymentdata = $this->module->getTillitOrderPaymentData($id_order);
-
-                if ($orderpaymentdata && isset($orderpaymentdata['tillit_order_id'])) {
-                    $tillit_order_id = $orderpaymentdata['tillit_order_id'];
-
-                    $response = $this->module->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, [], 'GET');
-
-                    $tillit_err = $this->module->getTillitErrorMessage($response);
-                    if ($tillit_err) {
-                        $this->restoreDuplicateCart($order->id, $customer->id);
-                        $message = ($tillit_err != '') ? $tillit_err : $this->module->l('Unable to retrieve the order payment information please contact store owner.');
-                        $this->errors[] = $message;
-                        $this->redirectWithNotifications('index.php?controller=order');
-                    }
-
-                    if (isset($response['state']) && $response['state'] == 'VERIFIED') {
-                        $payment_data = array(
-                            'tillit_order_id' => $response['id'],
-                            'tillit_order_reference' => $response['merchant_reference'],
-                            'tillit_order_state' => $response['state'],
-                            'tillit_order_status' => $response['status'],
-                            'tillit_day_on_invoice' => $this->module->day_on_invoice,
-                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
-                        );
-
-                        $this->module->setTillitOrderPaymentData($order->id, $payment_data);
-
-                        $history = new OrderHistory();
-                        $history->id_order = (int) $order->id;
-                        if ($order->current_state != (int) Configuration::get('PS_TILLIT_OS_PREPARATION')) {
-                            $history->changeIdOrderState((int) Configuration::get('PS_TILLIT_OS_PREPARATION'), $order, true);
-                            $history->addWithemail(true);
-                        }
-
-                        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . $order->id_cart . '&id_module=' . $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
-                    } else {
-
-                        $this->restoreDuplicateCart($order->id, $order->id_cutomer);
-
-                        $message = ($tillit_err != '') ? $tillit_err : $this->module->l('Unable to retrieve the order payment information please contact store owner.');
-                        $this->errors[] = $message;
-                        $this->redirectWithNotifications('index.php?controller=order');
-                    }
-                } else {
-                    $message = $this->module->l('Unable to find the requested order please contact store owner.');
+        if (isset($id_order) && !Tools::isEmpty($id_order)) {
+            $order = new Order((int) $id_order);
+            $cart = new Cart($order->id_cart);
+            $customer = new Customer($order->id_customer);
+            
+            $orderpaymentdata = $this->module->getTillitOrderPaymentData($id_order);
+            if ($orderpaymentdata && isset($orderpaymentdata['tillit_order_id'])) {
+                $tillit_order_id = $orderpaymentdata['tillit_order_id'];
+                
+                $response = $this->module->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, [], 'GET');
+                $tillit_err = $this->module->getTillitErrorMessage($response);
+                if ($tillit_err) {
+                    $this->restoreDuplicateCart($order->id, $customer->id);
+                    $this->chnageOrderStatus($order->id, Configuration::get('PS_TILLIT_OS_ERROR'));
+                    $message = ($tillit_err != '') ? $tillit_err : $this->module->l('Unable to retrieve the order payment information please contact store owner.');
                     $this->errors[] = $message;
                     $this->redirectWithNotifications('index.php?controller=order');
                 }
-            } else {
-                $message = $this->module->l('Unable to find the requested order please contact store owner.');
-                $this->errors[] = $message;
-                $this->redirectWithNotifications('index.php?controller=order');
+
+                if (isset($response['state']) && $response['state'] == 'VERIFIED') {
+                    $payment_data = array(
+                        'tillit_order_id' => $response['id'],
+                        'tillit_order_reference' => $response['merchant_reference'],
+                        'tillit_order_state' => $response['state'],
+                        'tillit_order_status' => $response['status'],
+                        'tillit_day_on_invoice' => $this->module->day_on_invoice,
+                        'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                    );
+                    $this->module->setTillitOrderPaymentData($order->id, $payment_data);
+                }
             }
+            $this->chnageOrderStatus($order->id, Configuration::get('PS_TILLIT_OS_PREPARATION'));
+            Tools::redirect('index.php?controller=order-confirmation&id_cart=' . $order->id_cart . '&id_module=' . $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
         } else {
-            $message = $this->module->l('Something went wrong while processing your order.');
+            $message = $this->module->l('Unable to find the requested order please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order&step=1');
         }
@@ -112,5 +82,16 @@ class TillitConfirmationModuleFrontController extends ModuleFrontController
         $context->cart = $duplication['cart'];
         CartRule::autoAddToCart($context);
         $this->context->cookie->write();
+    }
+
+    protected function chnageOrderStatus($id_order, $id_order_status)
+    {
+        $order = new Order((int) $id_order);
+        $history = new OrderHistory();
+        $history->id_order = (int) $order->id;
+        if ($order->current_state != (int) $id_order_status) {
+            $history->changeIdOrderState((int) $id_order_status, $order, true);
+            $history->addWithemail(true);
+        }
     }
 }
