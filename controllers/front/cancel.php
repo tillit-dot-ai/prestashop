@@ -58,7 +58,7 @@ class TillitCancelModuleFrontController extends ModuleFrontController
                         'tillit_order_state' => $response['state'],
                         'tillit_order_status' => $response['status'],
                         'tillit_day_on_invoice' => $this->module->day_on_invoice,
-                        'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                        'tillit_invoice_url' => $response['invoice_url'],
                     );
                     $this->module->setTillitOrderPaymentData($order->id, $payment_data);
                 }

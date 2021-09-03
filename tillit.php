@@ -818,7 +818,7 @@ class Tillit extends PaymentModule
                             'tillit_order_state' => $response['state'],
                             'tillit_order_status' => $response['status'],
                             'tillit_day_on_invoice' => $this->day_on_invoice,
-                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                            'tillit_invoice_url' => $response['invoice_url'],
                         );
                         $this->setTillitOrderPaymentData($id_order, $payment_data);
                     }
@@ -832,7 +832,7 @@ class Tillit extends PaymentModule
                             'tillit_order_state' => $response['state'],
                             'tillit_order_status' => $response['status'],
                             'tillit_day_on_invoice' => $this->day_on_invoice,
-                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                            'tillit_invoice_url' => $response['invoice_url'],
                         );
                         $this->setTillitOrderPaymentData($id_order, $payment_data);
                     }
@@ -845,7 +845,7 @@ class Tillit extends PaymentModule
                             'tillit_order_state' => $response['state'],
                             'tillit_order_status' => $response['status'],
                             'tillit_day_on_invoice' => $this->day_on_invoice,
-                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                            'tillit_invoice_url' => $response['invoice_url'],
                         );
                         $this->setTillitOrderPaymentData($id_order, $payment_data);
                     }
@@ -859,7 +859,7 @@ class Tillit extends PaymentModule
                             'tillit_order_state' => $response['state'],
                             'tillit_order_status' => $response['status'],
                             'tillit_day_on_invoice' => $this->day_on_invoice,
-                            'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                            'tillit_invoice_url' => $response['invoice_url'],
                         );
                         $this->setTillitOrderPaymentData($id_order, $payment_data);
                     }
@@ -1078,7 +1078,7 @@ class Tillit extends PaymentModule
             'currency' => $currency->iso_code,
             'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
             'discount_rate' => '0',
-            'payment_type' => $this->product_type,
+            'invoice_type' => $this->product_type,
             'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
             'tax_rate' => strval($cart->getAverageProductsTaxRate()),
             'buyer' => array(
@@ -1150,31 +1150,20 @@ class Tillit extends PaymentModule
         if (Validate::isLoadedObject($carrier)) {
             $carrier_name = $carrier->name;
         }
-
+        
         $request_data = array(
+            'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+            'currency' => $currency->iso_code,
+            'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+            'discount_rate' => '0',
+            'invoice_type' => $this->product_type,
+            'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+            'tax_rate' => strval($cart->getAverageProductsTaxRate()),
             'buyer_department' => $invoice_address->department,
             'buyer_project' => $invoice_address->project,
-            'line_items' => $this->getTillitProductItems($cart),
-            'merchant_reference' => strval($orderpaymentdata['tillit_order_reference']),
             'merchant_additional_info' => '',
-            'recurring' => false,
-            'order_note' => '',
-            'payment' => array(
-                'currency' => $currency->iso_code,
-                'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
-                'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
-                'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
-                'tax_rate' => strval($cart->getAverageProductsTaxRate()),
-                'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
-                'discount_rate' => '0',
-                'discount_rate' => '0',
-                'type' => $this->product_type,
-            ),
-            'shipping_details' => array(
-                'carrier_name' => $carrier_name,
-                'tracking_number' => $tracking_number,
-                'expected_delivery_date' => date('Y-m-d', strtotime('+ 7 days'))
-            ),
+            'merchant_reference' => strval($order_reference),
             'billing_address' => array(
                 'city' => $invoice_address->city,
                 'country' => Country::getIsoById($invoice_address->id_country),
@@ -1191,8 +1180,16 @@ class Tillit extends PaymentModule
                 'region' => $delivery_address->id_state ? State::getNameById($delivery_address->id_state) : "",
                 'street_address' => $delivery_address->address1 . (isset($delivery_address->address2) ? $delivery_address->address2 : "")
             ),
+            'shipping_details' => array(
+                'carrier_name' => $carrier_name,
+                'tracking_number' => $tracking_number,
+                'expected_delivery_date' => date('Y-m-d', strtotime('+ 7 days'))
+            ),
+            'recurring' => false,
+            'order_note' => '',
+            'line_items' => $this->getTillitProductItems($cart),
         );
-
+        
         return $request_data;
     }
 
@@ -1240,11 +1237,11 @@ class Tillit extends PaymentModule
                     'barcodes' => array(
                         array(
                             'type' => 'SKU',
-                            'id' => $line_item['ean13']
+                            'value' => $line_item['ean13']
                         ),
                         array(
                             'type' => 'UPC',
-                            'id' => $line_item['upc']
+                            'value' => $line_item['upc']
                         ),
                     ),
                 ),

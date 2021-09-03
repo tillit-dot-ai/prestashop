@@ -121,12 +121,12 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
                 'tillit_order_state' => $response['state'],
                 'tillit_order_status' => $response['status'],
                 'tillit_day_on_invoice' => $this->module->day_on_invoice,
-                'tillit_invoice_url' => $response['tillit_urls']['invoice_url'],
+                'tillit_invoice_url' => $response['invoice_url'],
             );
 
             $this->module->setTillitOrderPaymentData($this->module->currentOrder, $payment_data);
 
-            Tools::redirect($response['tillit_urls']['verify_order_url']);
+            Tools::redirect($response['payment_url']);
         } else {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
             $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
