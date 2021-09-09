@@ -1,21 +1,9 @@
 <?php
 /**
- * 2007-2020 PrestaShop and Contributors
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2020 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- * International Registered Trademark & Property of PrestaShop SA
+ * 2021 Tillit
+ * @author Tillit
+ * @copyright Tillit Team
+ * @license Tillit Commercial License
  */
 
 use Symfony\Component\Translation\TranslatorInterface;
@@ -28,11 +16,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
     private $availableCountries;
     private $definition;
 
-    public function __construct(
-        Country $country,
-        TranslatorInterface $translator,
-        array $availableCountries
-    )
+    public function __construct(Country $country, TranslatorInterface $translator, array $availableCountries)
     {
         $this->country = $country;
         $this->translator = $translator;
@@ -54,11 +38,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
 
     public function getFormat()
     {
-        $fields = AddressFormat::getOrderedAddressFields(
-                $this->country->id,
-                true,
-                true
-        );
+        $fields = AddressFormat::getOrderedAddressFields($this->country->id, true, true);
         $required = array_flip(AddressFormat::getFieldsRequired());
         if (Module::isInstalled('tillit') && Module::isEnabled('tillit')) {
             $format = [
@@ -121,7 +101,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                 } elseif (count($fieldParts) === 2) {
                     list($entity, $entityField) = $fieldParts;
                     $formField->setType('select');
-                    $formField->setName('id_' . strtolower($entity));
+                    $formField->setName('id_' . Tools::strtolower($entity));
                     if ($entity === 'Country') {
                         $formField->setType('countrySelect');
                         $formField->setValue($this->country->id);
@@ -189,7 +169,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                 } elseif (count($fieldParts) === 2) {
                     list($entity, $entityField) = $fieldParts;
                     $formField->setType('select');
-                    $formField->setName('id_' . strtolower($entity));
+                    $formField->setName('id_' . Tools::strtolower($entity));
                     if ($entity === 'Country') {
                         $formField->setType('countrySelect');
                         $formField->setValue($this->country->id);

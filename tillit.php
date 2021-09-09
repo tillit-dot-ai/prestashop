@@ -1,21 +1,9 @@
 <?php
 /**
- * 2007-2020 PrestaShop and Contributors
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2020 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- * International Registered Trademark & Property of PrestaShop SA
+ * 2021 Tillit
+ * @author Tillit
+ * @copyright Tillit Team
+ * @license Tillit Commercial License
  */
 
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
@@ -793,7 +781,7 @@ class Tillit extends PaymentModule
             if ($orderpaymentdata && isset($orderpaymentdata['tillit_order_id'])) {
                 $tillit_order_id = $orderpaymentdata['tillit_order_id'];
                 $paymentdata = $this->getTillitUpdateOrderData($order, $orderpaymentdata);
-                $response = $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, $paymentdata, 'PUT');
+                $this->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, $paymentdata, 'PUT');
             }
         }
     }
@@ -873,7 +861,7 @@ class Tillit extends PaymentModule
         $countries = Country::getCountries($this->context->language->id, false, false, false);
         $param_countries = array();
         foreach ($countries as $country) {
-            $param_countries[$country['id_country']] = strtolower($country['iso_code']);
+            $param_countries[$country['id_country']] = Tools::strtolower($country['iso_code']);
         }
         Media::addJsDef(array('tillit' => array(
                 'search_empty_text' => $this->l('No result found'),
@@ -1140,7 +1128,6 @@ class Tillit extends PaymentModule
     public function getTillitUpdateOrderData($order, $orderpaymentdata)
     {
         $cart = new Cart($order->id_cart);
-        $cutomer = new Customer($cart->id_customer);
         $currency = new Currency($cart->id_currency);
         $invoice_address = new Address($cart->id_address_invoice);
         $delivery_address = new Address($cart->id_address_delivery);
@@ -1163,7 +1150,7 @@ class Tillit extends PaymentModule
             'buyer_department' => $invoice_address->department,
             'buyer_project' => $invoice_address->project,
             'merchant_additional_info' => '',
-            'merchant_reference' => strval($order_reference),
+            'merchant_reference' => strval($orderpaymentdata['tillit_order_reference']),
             'billing_address' => array(
                 'city' => $invoice_address->city,
                 'country' => Country::getIsoById($invoice_address->id_country),
@@ -1216,10 +1203,10 @@ class Tillit extends PaymentModule
         foreach ($line_items as $line_item) {
             $categories = Product::getProductCategoriesFull($line_item['id_product'], $cart->id_lang);
             $image = Image::getCover($line_item['id_product']);
-            $imagePath = $this->context->link->getImageLink($line_item['link_rewrite'], $image['id_image'], 'home_default');
+            $imagePath = $this->context->link->getImageLink($line_item['link_rewrite'], $image['id_image'], ImageType::getFormattedName('home'));
             $product = array(
                 'name' => $line_item['name'],
-                'description' => substr($line_item['description_short'], 0, 255),
+                'description' => Tools::substr($line_item['description_short'], 0, 255),
                 'gross_amount' => strval($this->getTillitRoundAmount($line_item['total_wt'])),
                 'net_amount' => strval($this->getTillitRoundAmount($line_item['total'])),
                 'discount_amount' => strval($this->getTillitRoundAmount($line_item['reduction'])),
@@ -1335,7 +1322,7 @@ class Tillit extends PaymentModule
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
             $response = curl_exec($ch);
             $response = json_decode($response, true);
-            $info = curl_getinfo($ch);
+            curl_getinfo($ch);
             curl_close($ch);
         } else {
             $url = sprintf('%s%s', $this->getTillitCheckoutHostUrl(), $endpoint);
@@ -1354,7 +1341,7 @@ class Tillit extends PaymentModule
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
             $response = curl_exec($ch);
             $response = json_decode($response, true);
-            $info = curl_getinfo($ch);
+            curl_getinfo($ch);
             curl_close($ch);
         }
 
@@ -1363,8 +1350,8 @@ class Tillit extends PaymentModule
 
     public function checkTillitStartsWithString($string, $startString)
     {
-        $len = strlen($startString);
-        return (substr($string, 0, $len) === $startString);
+        $len = Tools::strlen($startString);
+        return (Tools::substr($string, 0, $len) === $startString);
     }
 
     public function getTillitErrorMessage($body)
