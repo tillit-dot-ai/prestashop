@@ -26,7 +26,7 @@ class Tillit extends PaymentModule
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
         $this->author = 'Tillit';
         $this->bootstrap = true;
-        $this->module_key = '';
+        $this->module_key = '0dff0a98ae080e510d4e23d22abcfe9c';
         $this->author_address = '';
         parent::__construct();
         $this->languages = Language::getLanguages(false);
