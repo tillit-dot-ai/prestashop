@@ -32,7 +32,7 @@ class Tillit extends PaymentModule
         $this->languages = Language::getLanguages(false);
         $this->displayName = $this->l('Tillit Payment');
         $this->description = $this->l('This module allows any merchant to accept payments with tillit payment gateway.');
-        $this->merchant_id = Configuration::get('PS_TILLIT_MERACHANT_ID');
+        $this->merchant_short_name = Configuration::get('PS_TILLIT_MERACHANT_SHORT_NAME');
         $this->api_key = Configuration::get('PS_TILLIT_MERACHANT_API_KEY');
         $this->payment_mode = Configuration::get('PS_TILLIT_PAYMENT_MODE');
         $this->enable_company_name = Configuration::get('PS_TILLIT_ENABLE_COMPANY_NAME');
@@ -79,7 +79,7 @@ class Tillit extends PaymentModule
         Configuration::updateValue('PS_TILLIT_TITLE', $installData['PS_TILLIT_TITLE']);
         Configuration::updateValue('PS_TILLIT_SUB_TITLE', $installData['PS_TILLIT_SUB_TITLE']);
         Configuration::updateValue('PS_TILLIT_PAYMENT_MODE', 'stg');
-        Configuration::updateValue('PS_TILLIT_MERACHANT_ID', '');
+        Configuration::updateValue('PS_TILLIT_MERACHANT_SHORT_NAME', '');
         Configuration::updateValue('PS_TILLIT_MERACHANT_API_KEY', '');
         Configuration::updateValue('PS_TILLIT_PRODUCT_TYPE', 'FUNDED_INVOICE');
         Configuration::updateValue('PS_TILLIT_DAY_ON_INVOICE', 14);
@@ -194,7 +194,7 @@ class Tillit extends PaymentModule
         Configuration::deleteByName('PS_TILLIT_TITLE');
         Configuration::deleteByName('PS_TILLIT_SUB_TITLE');
         Configuration::deleteByName('PS_TILLIT_PAYMENT_MODE');
-        Configuration::deleteByName('PS_TILLIT_MERACHANT_ID');
+        Configuration::deleteByName('PS_TILLIT_MERACHANT_SHORT_NAME');
         Configuration::deleteByName('PS_TILLIT_MERACHANT_API_KEY');
         Configuration::deleteByName('PS_TILLIT_MERACHANT_LOGO');
         Configuration::deleteByName('PS_TILLIT_PRODUCT_TYPE');
@@ -313,7 +313,7 @@ class Tillit extends PaymentModule
                     array(
                         'type' => 'text',
                         'label' => $this->l('Merchant short name'),
-                        'name' => 'PS_TILLIT_MERACHANT_ID',
+                        'name' => 'PS_TILLIT_MERACHANT_SHORT_NAME',
                         'required' => true,
                         'desc' => $this->l('Enter your merchant short name which is provided by tillit.'),
                     ),
@@ -339,8 +339,7 @@ class Tillit extends PaymentModule
                         'options' => array(
                             'query' => array(
                                 array('id_option' => 'FUNDED_INVOICE', 'name' => $this->l('Funded Invoice')),
-                                array('id_option' => 'MERCHANT_INVOICE', 'name' => $this->l('Merchant Invoice (coming soon)')),
-                                array('id_option' => 'ADMINISTERED_INVOICE', 'name' => $this->l('Administered Invoice (coming soon)')),
+                                array('id_option' => 'DIRECT_INVOICE', 'name' => $this->l('Direct Invoice')),
                             ),
                             'id' => 'id_option',
                             'name' => 'name'
@@ -369,7 +368,7 @@ class Tillit extends PaymentModule
             $fields_values['PS_TILLIT_TITLE'][$language['id_lang']] = Tools::getValue('PS_TILLIT_TITLE_' . (int) $language['id_lang'], Configuration::get('PS_TILLIT_TITLE', (int) $language['id_lang']));
             $fields_values['PS_TILLIT_SUB_TITLE'][$language['id_lang']] = Tools::getValue('PS_TILLIT_SUB_TITLE_' . (int) $language['id_lang'], Configuration::get('PS_TILLIT_SUB_TITLE', (int) $language['id_lang']));
         }
-        $fields_values['PS_TILLIT_MERACHANT_ID'] = Tools::getValue('PS_TILLIT_MERACHANT_ID', Configuration::get('PS_TILLIT_MERACHANT_ID'));
+        $fields_values['PS_TILLIT_MERACHANT_SHORT_NAME'] = Tools::getValue('PS_TILLIT_MERACHANT_SHORT_NAME', Configuration::get('PS_TILLIT_MERACHANT_SHORT_NAME'));
         $fields_values['PS_TILLIT_MERACHANT_API_KEY'] = Tools::getValue('PS_TILLIT_MERACHANT_API_KEY', Configuration::get('PS_TILLIT_MERACHANT_API_KEY'));
         $fields_values['PS_TILLIT_MERACHANT_LOGO'] = Tools::getValue('PS_TILLIT_MERACHANT_LOGO', Configuration::get('PS_TILLIT_MERACHANT_LOGO'));
         $fields_values['PS_TILLIT_PRODUCT_TYPE'] = Tools::getValue('PS_TILLIT_PRODUCT_TYPE', Configuration::get('PS_TILLIT_PRODUCT_TYPE'));
@@ -387,7 +386,7 @@ class Tillit extends PaymentModule
                 $this->errors[] = $this->l('Enter a sub title.');
             }
         }
-        if (Tools::isEmpty(Tools::getValue('PS_TILLIT_MERACHANT_ID'))) {
+        if (Tools::isEmpty(Tools::getValue('PS_TILLIT_MERACHANT_SHORT_NAME'))) {
             $this->errors[] = $this->l('Enter a merchant short name.');
         }
         if (Tools::isEmpty(Tools::getValue('PS_TILLIT_MERACHANT_API_KEY'))) {
@@ -434,7 +433,7 @@ class Tillit extends PaymentModule
         }
         Configuration::updateValue('PS_TILLIT_TITLE', $values['PS_TILLIT_TITLE']);
         Configuration::updateValue('PS_TILLIT_SUB_TITLE', $values['PS_TILLIT_SUB_TITLE']);
-        Configuration::updateValue('PS_TILLIT_MERACHANT_ID', trim(Tools::getValue('PS_TILLIT_MERACHANT_ID')));
+        Configuration::updateValue('PS_TILLIT_MERACHANT_SHORT_NAME', trim(Tools::getValue('PS_TILLIT_MERACHANT_SHORT_NAME')));
         Configuration::updateValue('PS_TILLIT_MERACHANT_API_KEY', trim(Tools::getValue('PS_TILLIT_MERACHANT_API_KEY')));
         Configuration::updateValue('PS_TILLIT_PRODUCT_TYPE', Tools::getValue('PS_TILLIT_PRODUCT_TYPE'));
         Configuration::updateValue('PS_TILLIT_DAY_ON_INVOICE', Tools::getValue('PS_TILLIT_DAY_ON_INVOICE'));
@@ -883,7 +882,7 @@ class Tillit extends PaymentModule
             return;
         }
 
-        if (Tools::isEmpty($this->merchant_id) || Tools::isEmpty($this->api_key)) {
+        if (Tools::isEmpty($this->merchant_short_name) || Tools::isEmpty($this->api_key)) {
             return;
         }
 
@@ -941,13 +940,13 @@ class Tillit extends PaymentModule
         $image_logo = Configuration::get('PS_TILLIT_MERACHANT_LOGO');
         if ($image_logo && file_exists(_PS_MODULE_DIR_ . $this->name . DIRECTORY_SEPARATOR . 'views/img' . DIRECTORY_SEPARATOR . $image_logo)) {
             $logo_path = $this->context->link->protocol_content . Tools::getMediaServer($image_logo) . $this->_path . 'views/img/' . $image_logo;
-            $this->setTillitPaymentRequest("/v1/merchant/" . $this->merchant_id . "/update", [
-                'merchant_id' => $this->merchant_id,
+            $this->setTillitPaymentRequest("/v1/merchant/update", [
+                'merchant_short_name' => $this->merchant_short_name,
                 'logo_path' => $logo_path
                 ], 'POST');
         } else {
-            $this->setTillitPaymentRequest("/v1/merchant/" . $this->merchant_id . "/update", [
-                'merchant_id' => $this->merchant_id,
+            $this->setTillitPaymentRequest("/v1/merchant/update", [
+                'merchant_short_name' => $this->merchant_short_name,
                 'logo_path' => ''
                 ], 'POST');
         }
@@ -1017,7 +1016,8 @@ class Tillit extends PaymentModule
                 ),
             ),
             'currency' => $currency->iso_code,
-            'merchant_id' => $this->merchant_id,
+            'merchant_short_name' => $this->merchant_short_name,
+            'invoice_type' => $this->product_type,
             'line_items' => array(
                 array(
                     'name' => 'Cart',
@@ -1042,7 +1042,7 @@ class Tillit extends PaymentModule
                 )
             ),
         );
-
+        
         return $request_data;
     }
 
@@ -1344,7 +1344,7 @@ class Tillit extends PaymentModule
             curl_getinfo($ch);
             curl_close($ch);
         }
-
+        
         return $response;
     }
 
@@ -1363,14 +1363,17 @@ class Tillit extends PaymentModule
         if (isset($body['response']['code']) && $body['response'] && $body['response']['code'] && $body['response']['code'] >= 400) {
             return sprintf($this->l('Tillit response code %d'), $body['response']['code']);
         }
-
-        if ($body) {
-            if (is_string($body))
-                return $body;
-            else if (isset($body['error_details']) && is_string($body['error_details']))
-                return $body['error_details'];
-            else if (isset($body['error_code']) && is_string($body['error_code']))
-                return $body['error_code'];
+        
+        if (is_string($body)) {
+            return $body;
+        }
+        
+        if(isset($body['error_details']) && $body['error_details']) {
+            return $body['error_details'];
+        }
+        
+        if (isset($body['error_code']) && $body['error_code']) {
+            return $body['error_message'];
         }
     }
 
