@@ -475,13 +475,13 @@ class Tillit extends PaymentModule
                         'type' => 'select',
                         'name' => 'PS_TILLIT_PAYMENT_MODE',
                         'label' => $this->l('Payment mode'),
-                        'desc' => $this->l('Choose your payment mode production, staging and development.'),
+                        'desc' => $this->l('Choose your payment mode production, staging and test.'),
                         'required' => true,
                         'options' => array(
                             'query' => array(
                                 array('id_option' => 'prod', 'name' => $this->l('Production')),
                                 array('id_option' => 'stg', 'name' => $this->l('Staging')),
-                                array('id_option' => 'dev', 'name' => $this->l('Development')),
+                                array('id_option' => 'test', 'name' => $this->l('Test')),
                             ),
                             'id' => 'id_option',
                             'name' => 'name'
@@ -1297,7 +1297,7 @@ class Tillit extends PaymentModule
 
     public function getTillitCheckoutHostUrl()
     {
-        return $this->payment_mode == 'prod' ? 'https://api.tillit.ai' : ($this->payment_mode == 'dev' ? 'http://huynguyen.hopto.org:8084' : 'https://staging.api.tillit.ai');
+        return $this->payment_mode == 'prod' ? 'https://api.tillit.ai' : ($this->payment_mode == 'stg' ? 'https://staging.api.tillit.ai' : 'https://test.api.tillit.ai');
     }
 
     public function setTillitPaymentRequest($endpoint, $payload = [], $method = 'POST')
