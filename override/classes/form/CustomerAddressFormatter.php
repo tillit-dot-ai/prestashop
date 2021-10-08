@@ -92,7 +92,6 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                     } elseif ($field === 'phone') {
                         $formField->setType('tel');
                         $formField->setRequired(true);
-                        $formField->addAvailableValue('placeholder', $this->translator->trans('+47 99999999', [], 'Shop.Forms.Labels'));
                     } elseif ($field === 'dni' && null !== $this->country) {
                         if ($this->country->need_identification_number) {
                             $formField->setRequired(true);
