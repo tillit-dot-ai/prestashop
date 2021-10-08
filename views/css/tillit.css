@@ -16,3 +16,6 @@
 .tillit-additional-information {
     display: block !important;
 }
+.iti.iti--allow-dropdown {
+    width: 100%;
+}

@@ -22,7 +22,7 @@ class Tillit extends PaymentModule
     {
         $this->name = 'tillit';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.1';
+        $this->version = '1.1.2';
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
         $this->author = 'Tillit';
         $this->bootstrap = true;
@@ -910,7 +910,9 @@ class Tillit extends PaymentModule
                 'countries' => $param_countries,
         )));
         $this->context->controller->addJqueryUI('ui.autocomplete');
+        $this->context->controller->registerStylesheet('tillit-intl-tel-css', 'modules/tillit/views/css/intlTelInput.css', array('priority' => 200, 'media' => 'all'));
         $this->context->controller->registerStylesheet('tillit-css', 'modules/tillit/views/css/tillit.css', array('priority' => 200, 'media' => 'all'));
+        $this->context->controller->registerJavascript('tillit-intl-tel-script', 'modules/tillit/views/js/intlTelInput.min.js', array('priority' => 200, 'attribute' => 'async'));
         $this->context->controller->registerJavascript('tillit-script', 'modules/tillit/views/js/tillit.js', array('priority' => 200, 'attribute' => 'async'));
     }
 
@@ -1012,7 +1014,7 @@ class Tillit extends PaymentModule
                 if ($this->checkTillitStartsWithString($tillit_err, '1 validation error for CreateOrderIntentRequestSchema: buyer -> company -> organization_number')) {
                     $error = $this->l('Your Complanay organization number is not valid. Please check your address.');
                 } else if ($this->checkTillitStartsWithString($tillit_err, '1 validation error for CreateOrderIntentRequestSchema: buyer -> representative -> phone_number')) {
-                    $error = $this->l('Please use phone format +47 99999999');
+                    $error = $this->l('Phone number is invalid');
                 } else if ($this->checkTillitStartsWithString($tillit_err, 'Minimum Payment using Tillit')) {
                     $error = $this->l('Minimum Payment using Tillit is 200 NOK');
                 } else if ($this->checkTillitStartsWithString($tillit_err, 'Maximum Payment using Tillit')) {
@@ -1175,7 +1177,7 @@ class Tillit extends PaymentModule
         if (Validate::isLoadedObject($carrier)) {
             $carrier_name = $carrier->name;
         }
-        
+
         $request_data = array(
             'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
             'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
@@ -1214,7 +1216,7 @@ class Tillit extends PaymentModule
             'order_note' => '',
             'line_items' => $this->getTillitProductItems($cart),
         );
-        
+
         return $request_data;
     }
 
