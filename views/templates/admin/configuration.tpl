@@ -35,9 +35,6 @@
                 $('#tillit-tabs a').removeClass('active');
                 $(this).addClass('active');
             });
-            
-            $('#PS_TILLIT_PRODUCT_TYPE option[value="MERCHANT_INVOICE"]').prop('disabled',true);
-            $('#PS_TILLIT_PRODUCT_TYPE option[value="ADMINISTERED_INVOICE"]').prop('disabled',true);
         });
     </script>
 {/literal}
