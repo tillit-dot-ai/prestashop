@@ -137,8 +137,9 @@ class Tillit {
     {
         const phoneInputField = document.querySelector("input[name='phone']");
         const phoneInput = window.intlTelInput(phoneInputField, {
+            preferredCountries: ["no", "gb"],
             utilsScript:
-                    "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
+                "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
         });
         $('.iti__selected-flag .iti__flag').removeClass('iti__us');
         $('.iti__selected-flag .iti__flag').addClass(' iti__' + tillit.countries[id_country]);
