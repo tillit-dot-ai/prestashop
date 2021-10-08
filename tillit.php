@@ -22,7 +22,7 @@ class Tillit extends PaymentModule
     {
         $this->name = 'tillit';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.1';
+        $this->version = '1.1.1';
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
         $this->author = 'Tillit';
         $this->bootstrap = true;
@@ -78,7 +78,8 @@ class Tillit extends PaymentModule
         Configuration::updateValue('PS_TILLIT_TAB_VALUE', 1);
         Configuration::updateValue('PS_TILLIT_TITLE', $installData['PS_TILLIT_TITLE']);
         Configuration::updateValue('PS_TILLIT_SUB_TITLE', $installData['PS_TILLIT_SUB_TITLE']);
-        Configuration::updateValue('PS_TILLIT_PAYMENT_MODE', 'stg');
+        Configuration::updateValue('PS_TILLIT_PAYMENT_MODE', 'test');
+        Configuration::updateValue('PS_TILLIT_PAYMENT_DEV_MODE', 'https://staging.api.tillit.ai');
         Configuration::updateValue('PS_TILLIT_MERACHANT_SHORT_NAME', '');
         Configuration::updateValue('PS_TILLIT_MERACHANT_API_KEY', '');
         Configuration::updateValue('PS_TILLIT_PRODUCT_TYPE', 'FUNDED_INVOICE');
@@ -243,7 +244,14 @@ class Tillit extends PaymentModule
 
         if (((bool) Tools::isSubmit('submitTillitOtherForm')) == true) {
             Configuration::updateValue('PS_TILLIT_TAB_VALUE', 2);
-            $this->saveTillitOtherFormValues();
+            $this->validTillitOtherFormValues();
+            if (!count($this->errors)) {
+                $this->saveTillitOtherFormValues();
+            } else {
+                foreach ($this->errors as $err) {
+                    $this->output .= $this->displayError($err);
+                }
+            }
         }
 
         if (((bool) Tools::isSubmit('submitTillitOrderStatusForm')) == true) {
@@ -464,6 +472,32 @@ class Tillit extends PaymentModule
 
     protected function getTillitOtherForm()
     {
+        if ($this->isTillitCheckoutDevelopment()) {
+            $payment_mode = array(
+                'type' => 'text',
+                'name' => 'PS_TILLIT_PAYMENT_DEV_MODE',
+                'label' => $this->l('Tillit test server'),
+                'desc' => $this->l('Enter your stagiing development url.'),
+                'required' => true,
+            );
+        } else {
+            $payment_mode = array(
+                'type' => 'select',
+                'name' => 'PS_TILLIT_PAYMENT_MODE',
+                'label' => $this->l('Payment mode'),
+                'desc' => $this->l('Choose your payment mode production and test.'),
+                'required' => true,
+                'options' => array(
+                    'query' => array(
+                        array('id_option' => 'prod', 'name' => $this->l('Production')),
+                        array('id_option' => 'test', 'name' => $this->l('Test')),
+                    ),
+                    'id' => 'id_option',
+                    'name' => 'name'
+                )
+            );
+        }
+
         $fields_form = array(
             'form' => array(
                 'legend' => array(
@@ -471,22 +505,7 @@ class Tillit extends PaymentModule
                     'icon' => 'icon-cogs',
                 ),
                 'input' => array(
-                    array(
-                        'type' => 'select',
-                        'name' => 'PS_TILLIT_PAYMENT_MODE',
-                        'label' => $this->l('Payment mode'),
-                        'desc' => $this->l('Choose your payment mode production, staging and test.'),
-                        'required' => true,
-                        'options' => array(
-                            'query' => array(
-                                array('id_option' => 'prod', 'name' => $this->l('Production')),
-                                array('id_option' => 'stg', 'name' => $this->l('Staging')),
-                                array('id_option' => 'test', 'name' => $this->l('Test')),
-                            ),
-                            'id' => 'id_option',
-                            'name' => 'name'
-                        )
-                    ),
+                    $payment_mode,
                     array(
                         'type' => 'switch',
                         'label' => $this->l('Activate company name auto-complete'),
@@ -599,7 +618,11 @@ class Tillit extends PaymentModule
     protected function getTillitOtherFormValues()
     {
         $fields_values = array();
-        $fields_values['PS_TILLIT_PAYMENT_MODE'] = Tools::getValue('PS_TILLIT_PAYMENT_MODE', Configuration::get('PS_TILLIT_PAYMENT_MODE'));
+        if ($this->isTillitCheckoutDevelopment()) {
+            $fields_values['PS_TILLIT_PAYMENT_DEV_MODE'] = Tools::getValue('PS_TILLIT_PAYMENT_DEV_MODE', Configuration::get('PS_TILLIT_PAYMENT_DEV_MODE'));
+        } else {
+            $fields_values['PS_TILLIT_PAYMENT_MODE'] = Tools::getValue('PS_TILLIT_PAYMENT_MODE', Configuration::get('PS_TILLIT_PAYMENT_MODE'));
+        }
         $fields_values['PS_TILLIT_ENABLE_COMPANY_NAME'] = Tools::getValue('PS_TILLIT_ENABLE_COMPANY_NAME', Configuration::get('PS_TILLIT_ENABLE_COMPANY_NAME'));
         $fields_values['PS_TILLIT_ENABLE_COMPANY_ID'] = Tools::getValue('PS_TILLIT_ENABLE_COMPANY_ID', Configuration::get('PS_TILLIT_ENABLE_COMPANY_ID'));
         $fields_values['PS_TILLIT_FANILIZE_PURCHASE'] = Tools::getValue('PS_TILLIT_FANILIZE_PURCHASE', Configuration::get('PS_TILLIT_FANILIZE_PURCHASE'));
@@ -609,9 +632,24 @@ class Tillit extends PaymentModule
         return $fields_values;
     }
 
+    protected function validTillitOtherFormValues()
+    {
+        if ($this->isTillitCheckoutDevelopment()) {
+            if (Tools::isEmpty(Tools::getValue('PS_TILLIT_PAYMENT_DEV_MODE'))) {
+                $this->errors[] = $this->l('Enter a tillit test server url.');
+            } elseif (!Validate::isUrl(Tools::getValue('PS_TILLIT_PAYMENT_DEV_MODE'))) {
+                $this->errors[] = $this->l('Enter a valid tillit test server url.');
+            }
+        }
+    }
+
     protected function saveTillitOtherFormValues()
     {
-        Configuration::updateValue('PS_TILLIT_PAYMENT_MODE', Tools::getValue('PS_TILLIT_PAYMENT_MODE'));
+        if ($this->isTillitCheckoutDevelopment()) {
+            Configuration::updateValue('PS_TILLIT_PAYMENT_DEV_MODE', Tools::getValue('PS_TILLIT_PAYMENT_DEV_MODE'));
+        } else {
+            Configuration::updateValue('PS_TILLIT_PAYMENT_MODE', Tools::getValue('PS_TILLIT_PAYMENT_MODE'));
+        }
         Configuration::updateValue('PS_TILLIT_ENABLE_COMPANY_NAME', Tools::getValue('PS_TILLIT_ENABLE_COMPANY_NAME'));
         Configuration::updateValue('PS_TILLIT_ENABLE_COMPANY_ID', Tools::getValue('PS_TILLIT_ENABLE_COMPANY_ID'));
         Configuration::updateValue('PS_TILLIT_FANILIZE_PURCHASE', Tools::getValue('PS_TILLIT_FANILIZE_PURCHASE'));
@@ -1042,7 +1080,7 @@ class Tillit extends PaymentModule
                 )
             ),
         );
-        
+
         return $request_data;
     }
 
@@ -1121,7 +1159,7 @@ class Tillit extends PaymentModule
             'order_note' => '',
             'line_items' => $this->getTillitProductItems($cart),
         );
-        
+
         return $request_data;
     }
 
@@ -1137,7 +1175,7 @@ class Tillit extends PaymentModule
         if (Validate::isLoadedObject($carrier)) {
             $carrier_name = $carrier->name;
         }
-        
+
         $request_data = array(
             'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
             'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
@@ -1176,7 +1214,7 @@ class Tillit extends PaymentModule
             'order_note' => '',
             'line_items' => $this->getTillitProductItems($cart),
         );
-        
+
         return $request_data;
     }
 
@@ -1297,7 +1335,35 @@ class Tillit extends PaymentModule
 
     public function getTillitCheckoutHostUrl()
     {
-        return $this->payment_mode == 'prod' ? 'https://api.tillit.ai' : ($this->payment_mode == 'stg' ? 'https://staging.api.tillit.ai' : 'https://test.api.tillit.ai');
+        $tillit_checkout_url = 'https://api.tillit.ai';
+        if ($this->isTillitCheckoutDevelopment()) {
+            $tillit_checkout_url = Configuration::get('PS_TILLIT_PAYMENT_DEV_MODE');
+        } else if ($this->payment_mode == 'test') {
+            $tillit_checkout_url = 'https://test.api.tillit.ai';
+        }
+        return $tillit_checkout_url;
+    }
+
+    public function isTillitCheckoutDevelopment()
+    {
+        $hostname = str_replace(array('http://', 'https://'), '', $_SERVER['SERVER_NAME']);
+
+        if (in_array($hostname, array('dev.tillitlocal.ai', 'localhost')) || substr($hostname, 0, 10) === 'localhost:') {
+            return true;
+        }
+
+        if (strlen($hostname) > 10 && substr($hostname, -10) === '.tillit.ai') {
+            $tillit_prod_sites = array('shop', 'morgenlevering', 'arkwrightx', 'paguro');
+            $host_prefix = substr($hostname, 0, -10);
+
+            foreach ($tillit_prod_sites as $tillit_prod_site) {
+                if ($host_prefix === $tillit_prod_site || $host_prefix === ('www.' . $tillit_prod_site)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public function setTillitPaymentRequest($endpoint, $payload = [], $method = 'POST')
@@ -1344,7 +1410,7 @@ class Tillit extends PaymentModule
             curl_getinfo($ch);
             curl_close($ch);
         }
-        
+
         return $response;
     }
 
@@ -1363,15 +1429,15 @@ class Tillit extends PaymentModule
         if (isset($body['response']['code']) && $body['response'] && $body['response']['code'] && $body['response']['code'] >= 400) {
             return sprintf($this->l('Tillit response code %d'), $body['response']['code']);
         }
-        
+
         if (is_string($body)) {
             return $body;
         }
-        
-        if(isset($body['error_details']) && $body['error_details']) {
+
+        if (isset($body['error_details']) && $body['error_details']) {
             return $body['error_details'];
         }
-        
+
         if (isset($body['error_code']) && $body['error_code']) {
             return $body['error_message'];
         }
