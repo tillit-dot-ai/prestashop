@@ -18,6 +18,7 @@ class Tillit {
         }
 
         Tillit.selectAccountType();
+        Tillit.setInternationalPhoneDropDown(id_country);
 
         if (tillit.company_name_search === '1') {
 
@@ -130,6 +131,18 @@ class Tillit {
             $("input[name='companyid']").closest(".form-group").hide();
             $("input[name='companyid']").closest(".form-group").children('.form-control-comment').show();
         }
+    }
+
+    static setInternationalPhoneDropDown(id_country)
+    {
+        const phoneInputField = document.querySelector("input[name='phone']");
+        const phoneInput = window.intlTelInput(phoneInputField, {
+            preferredCountries: ["no", "gb"],
+            utilsScript:
+                "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
+        });
+        $('.iti__selected-flag .iti__flag').removeClass('iti__us');
+        $('.iti__selected-flag .iti__flag').addClass(' iti__' + tillit.countries[id_country]);
     }
 }
 
