@@ -11,7 +11,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class Tillit extends PaymentModule
+class Two_payment extends PaymentModule
 {
 
     protected $output = '';
@@ -19,7 +19,7 @@ class Tillit extends PaymentModule
 
     public function __construct()
     {
-        $this->name = 'ps_two';
+        $this->name = 'two_payment';
         $this->tab = 'payments_gateways';
         $this->version = '1.2.0';
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
@@ -909,10 +909,10 @@ class Tillit extends PaymentModule
                 'countries' => $param_countries,
         )));
         $this->context->controller->addJqueryUI('ui.autocomplete');
-        $this->context->controller->registerStylesheet('tillit-intl-tel-css', 'modules/ps_two/views/css/intlTelInput.css', array('priority' => 200, 'media' => 'all'));
-        $this->context->controller->registerStylesheet('tillit-css', 'modules/ps_two/views/css/two.css', array('priority' => 200, 'media' => 'all'));
-        $this->context->controller->registerJavascript('tillit-intl-tel-script', 'modules/ps_two/views/js/intlTelInput.min.js', array('priority' => 200, 'attribute' => 'async'));
-        $this->context->controller->registerJavascript('tillit-script', 'modules/ps_two/views/js/two.js', array('priority' => 200, 'attribute' => 'async'));
+        $this->context->controller->registerStylesheet('tillit-intl-tel-css', 'modules/two_payment/views/css/intlTelInput.css', array('priority' => 200, 'media' => 'all'));
+        $this->context->controller->registerStylesheet('tillit-css', 'modules/two_payment/views/css/two_payment.css', array('priority' => 200, 'media' => 'all'));
+        $this->context->controller->registerJavascript('tillit-intl-tel-script', 'modules/two_payment/views/js/intlTelInput.min.js', array('priority' => 200, 'attribute' => 'async'));
+        $this->context->controller->registerJavascript('tillit-script', 'modules/two_payment/views/js/two_payment.js', array('priority' => 200, 'attribute' => 'async'));
     }
 
     public function hookPaymentOptions($params)
@@ -968,8 +968,8 @@ class Tillit extends PaymentModule
             ->setCallToActionText($title)
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', array(), true))
             ->setInputs(['token' => ['name' => 'token', 'type' => 'hidden', 'value' => Tools::getToken(false)]])
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'ps_two/views/img/two.png'))
-            ->setAdditionalInformation($this->context->smarty->fetch('module:ps_two/views/templates/hook/paymentinfo.tpl'));
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'two_payment/views/img/two_payment.png'))
+            ->setAdditionalInformation($this->context->smarty->fetch('module:two_payment/views/templates/hook/paymentinfo.tpl'));
 
         return $preTillitOption;
     }
@@ -1353,7 +1353,7 @@ class Tillit extends PaymentModule
             return true;
         }
 
-        if (Tools::substr($hostname) > 8 && Tools::substr($hostname, -8) === '.two.inc') {
+        if (Tools::strlen($hostname) > 8 && Tools::substr($hostname, -8) === '.two.inc') {
             $tillit_prod_sites = array('shop', 'morgenlevering', 'arkwrightx', 'paguro');
             $host_prefix = Tools::substr($hostname, 0, -8);
 
@@ -1493,7 +1493,7 @@ class Tillit extends PaymentModule
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
             ));
-            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayPaymentReturn.tpl');
+            return $this->context->smarty->fetch('module:two_payment/views/templates/hook/displayPaymentReturn.tpl');
         }
     }
 
@@ -1505,7 +1505,7 @@ class Tillit extends PaymentModule
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
             ));
-            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayOrderDetail.tpl');
+            return $this->context->smarty->fetch('module:two_payment/views/templates/hook/displayOrderDetail.tpl');
         }
     }
 
@@ -1517,7 +1517,7 @@ class Tillit extends PaymentModule
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
             ));
-            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayAdminOrderLeft.tpl');
+            return $this->context->smarty->fetch('module:two_payment/views/templates/hook/displayAdminOrderLeft.tpl');
         }
     }
 
@@ -1526,7 +1526,7 @@ class Tillit extends PaymentModule
         $id_order = $params['id_order'];
         $tillitpaymentdata = $this->getTillitOrderPaymentData($id_order);
         if ($tillitpaymentdata) {
-            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayAdminOrderTabLink.tpl');
+            return $this->context->smarty->fetch('module:two_payment/views/templates/hook/displayAdminOrderTabLink.tpl');
         }
     }
 
@@ -1539,7 +1539,7 @@ class Tillit extends PaymentModule
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
             ));
-            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayAdminOrderTabContent.tpl');
+            return $this->context->smarty->fetch('module:two_payment/views/templates/hook/displayAdminOrderTabContent.tpl');
         }
     }
 }
