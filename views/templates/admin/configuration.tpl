@@ -1,16 +1,16 @@
 {*
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
- *}
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
+ */
+*}
 
 <div class="row">
     <div id="tillit-tabs" class="col-lg-2 col-md-3">
         <div class="list-group">
-            <a class="list-group-item {if $tillittabvalue == 1}active{/if}" href="#general-settings" aria-controls="general-settings" role="tab" data-toggle="tab">{l s='General Settings' mod='tillit'}</a>
-            <a class="list-group-item {if $tillittabvalue == 2}active{/if}" href="#other-settings" aria-controls="other-settings" role="tab" data-toggle="tab">{l s='Other Settings' mod='tillit'}</a>
-            <a class="list-group-item {if $tillittabvalue == 3}active{/if}" href="#order-status-settings" aria-controls="order-status-settings" role="tab" data-toggle="tab">{l s='Order Status Settings' mod='tillit'}</a>
+            <a class="list-group-item {if $tillittabvalue == 1}active{/if}" href="#general-settings" aria-controls="general-settings" role="tab" data-toggle="tab">{l s='General Settings' mod='two'}</a>
+            <a class="list-group-item {if $tillittabvalue == 2}active{/if}" href="#other-settings" aria-controls="other-settings" role="tab" data-toggle="tab">{l s='Other Settings' mod='two'}</a>
+            <a class="list-group-item {if $tillittabvalue == 3}active{/if}" href="#order-status-settings" aria-controls="order-status-settings" role="tab" data-toggle="tab">{l s='Order Status Settings' mod='two'}</a>
         </div>
     </div>
     <div class="col-lg-10 col-md-9">

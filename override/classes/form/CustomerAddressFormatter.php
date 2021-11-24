@@ -1,9 +1,8 @@
 <?php
 /**
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
  */
 
 use Symfony\Component\Translation\TranslatorInterface;
@@ -40,7 +39,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
     {
         $fields = AddressFormat::getOrderedAddressFields($this->country->id, true, true);
         $required = array_flip(AddressFormat::getFieldsRequired());
-        if (Module::isInstalled('tillit') && Module::isEnabled('tillit')) {
+        if (Module::isInstalled('two') && Module::isEnabled('two')) {
             $format = [
                 'back' => (new FormField())
                     ->setName('back')

@@ -1,10 +1,10 @@
 {*
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
+ */
  *}
- 
+
 {extends file="helpers/form/form.tpl"}
 {block name="field"}
     {if $input.type == 'file'}
@@ -17,7 +17,7 @@
                         <input id="{$input.name}-name" type="text" class="disabled" name="filename" readonly />
                         <span class="input-group-btn">
                             <button id="{$input.name}-selectbutton" type="button" name="submitAddAttachments" class="btn btn-default">
-                                <i class="icon-folder-open"></i> {l s='Choose a file' mod='tillit'}
+                                <i class="icon-folder-open"></i> {l s='Choose a file' mod='two'}
                             </button>
                         </span>
                     </div>
@@ -29,7 +29,7 @@
                     <div id="{$input.name}-images-thumbnails" class="col-lg-12">
                         <img src="{$uri}views/img/{$fields_value[$input.name]}" class="img-thumbnail" style="height: 70px;"/>
                         <a class="btn btn-default" href="{$current}&{$identifier}={$form_id|intval}&token={$token}&deleteLogo=1">
-                            <i class="icon-trash"></i> {l s='Delete' mod='tillit'}
+                            <i class="icon-trash"></i> {l s='Delete' mod='two'}
                         </a>
                     </div>
                 {/if}

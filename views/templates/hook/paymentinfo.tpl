@@ -1,9 +1,9 @@
 {*
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
- *}
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
+ */
+*}
 
 <section>
     <p>{$subtitle}</p>
@@ -22,7 +22,7 @@
             var payments = document.getElementsByName('payment-option');
             for (var i = 0, length = payments.length; i < length; i++) {
                 var payment = payments[i].getAttribute('data-module-name');
-                if (payment == "tillit") {
+                if (payment == 'two') {
                     var dataID = payments[i].getAttribute('id');
                     if (payment_enable == '1') {
                         document.getElementById(dataID).checked = true;

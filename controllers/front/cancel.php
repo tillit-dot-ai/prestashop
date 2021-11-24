@@ -1,9 +1,8 @@
 <?php
 /**
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
  */
 
 class TillitCancelModuleFrontController extends ModuleFrontController
@@ -33,7 +32,7 @@ class TillitCancelModuleFrontController extends ModuleFrontController
                 
                 $response = $this->module->setTillitPaymentRequest('/v1/order/' . $tillit_order_id . '/cancel', [], 'POST');
                 if (!isset($response)) {
-                    $message = sprintf($this->module->l('Could not update status to cancelled, please check with Tillit admin for id %s'), $tillit_order_id);
+                    $message = sprintf($this->module->l('Could not update status to cancelled, please check with Two admin for id %s'), $tillit_order_id);
                     $this->errors[] = $message;
                     $this->redirectWithNotifications('index.php?controller=order');
                 }

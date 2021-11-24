@@ -1,9 +1,8 @@
 <?php
 /**
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
  */
 
 class TillitPaymentModuleFrontController extends ModuleFrontController
@@ -28,7 +27,7 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
 
         $authorized = false;
         foreach (Module::getPaymentModules() as $module) {
-            if ($module['name'] == 'tillit') {
+            if ($module['name'] == 'two') {
                 $authorized = true;
                 break;
             }
@@ -46,7 +45,7 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
             $this->redirectWithNotifications('index.php?controller=order');
         }
 
-        //Tillit Create order
+        //Two Create order
         $this->module->validateOrder($cart->id, Configuration::get('PS_TILLIT_OS_AWAITING'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, null, array(), (int) $currency->id, false, $customer->secure_key);
 
         $paymentdata = $this->module->getTillitNewOrderData($this->module->currentOrder, $cart);
@@ -72,7 +71,7 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
         if (isset($response['response']['code']) && ($response['response']['code'] === 401 || $response['response']['code'] === 403)) {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
             $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
-            $message = $this->module->l('Website is not properly configured with Tillit payment.');
+            $message = $this->module->l('Website is not properly configured with Two payment.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }

@@ -1,9 +1,8 @@
 <?php
 /**
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
  */
 
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
@@ -20,18 +19,18 @@ class Tillit extends PaymentModule
 
     public function __construct()
     {
-        $this->name = 'tillit';
+        $this->name = 'two';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.2';
+        $this->version = '1.2.0';
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
-        $this->author = 'Tillit';
+        $this->author = 'Two';
         $this->bootstrap = true;
         $this->module_key = '0dff0a98ae080e510d4e23d22abcfe9c';
         $this->author_address = '';
         parent::__construct();
         $this->languages = Language::getLanguages(false);
-        $this->displayName = $this->l('Tillit Payment');
-        $this->description = $this->l('This module allows any merchant to accept payments with tillit payment gateway.');
+        $this->displayName = $this->l('Two Payment');
+        $this->description = $this->l('This module allows any merchant to accept payments with Two payment gateway.');
         $this->merchant_short_name = Configuration::get('PS_TILLIT_MERACHANT_SHORT_NAME');
         $this->api_key = Configuration::get('PS_TILLIT_MERACHANT_API_KEY');
         $this->payment_mode = Configuration::get('PS_TILLIT_PAYMENT_MODE');
@@ -116,7 +115,7 @@ class Tillit extends PaymentModule
             $orderStateObj->pdf_invoice = 0;
             $orderStateObj->deleted = 0;
             foreach ($this->languages as $language) {
-                $orderStateObj->name[$language['id_lang']] = 'Awaiting tillit payment';
+                $orderStateObj->name[$language['id_lang']] = 'Awaiting Two payment';
             }
             if ($orderStateObj->add()) {
                 Configuration::updateValue('PS_TILLIT_OS_AWAITING', (int) $orderStateObj->id);
@@ -323,14 +322,14 @@ class Tillit extends PaymentModule
                         'label' => $this->l('Merchant short name'),
                         'name' => 'PS_TILLIT_MERACHANT_SHORT_NAME',
                         'required' => true,
-                        'desc' => $this->l('Enter your merchant short name which is provided by tillit.'),
+                        'desc' => $this->l('Enter your merchant short name which is provided by two.'),
                     ),
                     array(
                         'type' => 'password',
                         'label' => $this->l('Api key'),
                         'name' => 'PS_TILLIT_MERACHANT_API_KEY',
                         'required' => true,
-                        'desc' => $this->l('Enter your api key which is provided by tillit.'),
+                        'desc' => $this->l('Enter your api key which is provided by two.'),
                     ),
                     array(
                         'type' => 'file',
@@ -342,7 +341,7 @@ class Tillit extends PaymentModule
                         'type' => 'select',
                         'name' => 'PS_TILLIT_PRODUCT_TYPE',
                         'label' => $this->l('Choose your product'),
-                        'desc' => $this->l('Choose your product funded invoice, merchant invoice and administered invoice depend on tillit account.'),
+                        'desc' => $this->l('Choose your product funded invoice, merchant invoice and administered invoice depend on Two account.'),
                         'required' => true,
                         'options' => array(
                             'query' => array(
@@ -476,7 +475,7 @@ class Tillit extends PaymentModule
             $payment_mode = array(
                 'type' => 'text',
                 'name' => 'PS_TILLIT_PAYMENT_DEV_MODE',
-                'label' => $this->l('Tillit test server'),
+                'label' => $this->l('Two test server'),
                 'desc' => $this->l('Enter your stagiing development url.'),
                 'required' => true,
             );
@@ -551,7 +550,7 @@ class Tillit extends PaymentModule
                         'label' => $this->l('Finalize purchase when order is shipped'),
                         'name' => 'PS_TILLIT_FANILIZE_PURCHASE',
                         'is_bool' => true,
-                        'desc' => $this->l('If you choose YES then order status of shipped to be passed to tillit.'),
+                        'desc' => $this->l('If you choose YES then order status of shipped to be passed to two.'),
                         'required' => true,
                         'values' => array(
                             array(
@@ -568,10 +567,10 @@ class Tillit extends PaymentModule
                     ),
                     array(
                         'type' => 'switch',
-                        'label' => $this->l('Pre-approve the buyer during checkout and disable tillit if the buyer is declined'),
+                        'label' => $this->l('Pre-approve the buyer during checkout and disable Two if the buyer is declined'),
                         'name' => 'PS_TILLIT_ENABLE_ORDER_INTENT',
                         'is_bool' => true,
-                        'desc' => $this->l('If you choose YES then pre-approve the buyer during checkout and disable tillit if the buyer is declined.'),
+                        'desc' => $this->l('If you choose YES then pre-approve the buyer during checkout and disable Two if the buyer is declined.'),
                         'required' => true,
                         'values' => array(
                             array(
@@ -636,9 +635,9 @@ class Tillit extends PaymentModule
     {
         if ($this->isTillitCheckoutDevelopment()) {
             if (Tools::isEmpty(Tools::getValue('PS_TILLIT_PAYMENT_DEV_MODE'))) {
-                $this->errors[] = $this->l('Enter a tillit test server url.');
+                $this->errors[] = $this->l('Enter a Two test server url.');
             } elseif (!Validate::isUrl(Tools::getValue('PS_TILLIT_PAYMENT_DEV_MODE'))) {
-                $this->errors[] = $this->l('Enter a valid tillit test server url.');
+                $this->errors[] = $this->l('Enter a valid Two test server url.');
             }
         }
     }
@@ -1015,10 +1014,10 @@ class Tillit extends PaymentModule
                     $error = $this->l('Your Complanay organization number is not valid. Please check your address.');
                 } else if ($this->checkTillitStartsWithString($tillit_err, '1 validation error for CreateOrderIntentRequestSchema: buyer -> representative -> phone_number')) {
                     $error = $this->l('Phone number is invalid');
-                } else if ($this->checkTillitStartsWithString($tillit_err, 'Minimum Payment using Tillit')) {
-                    $error = $this->l('Minimum Payment using Tillit is 200 NOK');
-                } else if ($this->checkTillitStartsWithString($tillit_err, 'Maximum Payment using Tillit')) {
-                    $error = $this->l('Maximum Payment using Tillit is 250,000 NOK');
+                } else if ($this->checkTillitStartsWithString($tillit_err, 'Minimum Payment using Two')) {
+                    $error = $this->l('Minimum Payment using Two is 200 NOK');
+                } else if ($this->checkTillitStartsWithString($tillit_err, 'Maximum Payment using Two')) {
+                    $error = $this->l('Maximum Payment using Two is 250,000 NOK');
                 } else {
                     $error = $tillit_err;
                 }
@@ -1429,7 +1428,7 @@ class Tillit extends PaymentModule
         }
 
         if (isset($body['response']['code']) && $body['response'] && $body['response']['code'] && $body['response']['code'] >= 400) {
-            return sprintf($this->l('Tillit response code %d'), $body['response']['code']);
+            return sprintf($this->l('Two response code %d'), $body['response']['code']);
         }
 
         if (is_string($body)) {

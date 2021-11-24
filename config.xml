@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
-    <name>tillit</name>
-    <displayName><![CDATA[Tillit Payment]]></displayName>
+    <name>two</name>
+    <displayName><![CDATA[TWO Payment]]></displayName>
     <version><![CDATA[1.1.1]]></version>
-    <description><![CDATA[This module allows any merchant to accept payments with tillit payment gateway.]]></description>
-    <author><![CDATA[Tillit]]></author>
+    <description><![CDATA[This module allows any merchant to accept payments with two payment gateway.]]></description>
+    <author><![CDATA[TWO]]></author>
     <tab><![CDATA[payments_gateways]]></tab>
     <is_configurable>1</is_configurable>
     <need_instance>1</need_instance>
