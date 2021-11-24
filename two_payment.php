@@ -899,7 +899,7 @@ class Two_payment extends PaymentModule
         foreach ($countries as $country) {
             $param_countries[$country['id_country']] = Tools::strtolower($country['iso_code']);
         }
-        Media::addJsDef(array('tillit' => array(
+        Media::addJsDef(array('two' => array(
                 'search_empty_text' => $this->l('No result found'),
                 'checkout_host' => $this->getTillitCheckoutHostUrl(),
                 'company_name_search' => $this->enable_company_name,

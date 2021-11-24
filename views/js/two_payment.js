@@ -4,7 +4,7 @@
  * @license Two Commercial License
  */
 
-class Tillit {
+class Two_payment {
 
     constructor()
     {
@@ -16,10 +16,10 @@ class Tillit {
             return;
         }
 
-        Tillit.selectAccountType();
-        Tillit.setInternationalPhoneDropDown(id_country);
+        Two_payment.selectAccountType();
+        Two_payment.setInternationalPhoneDropDown(id_country);
 
-        if (tillit.company_name_search === '1') {
+        if (two.company_name_search === '1') {
 
             const $billingCompany = $checkout.find('input[name="company"]');
 
@@ -30,7 +30,7 @@ class Tillit {
                     },
                     source: function (request, response) {
                         $.ajax({
-                            url: 'https://' + tillit.countries[id_country] + '.search.tillit.ai/search?limit=50&offset=0',
+                            url: 'https://' + two.countries[id_country] + '.search.tillit.ai/search?limit=50&offset=0',
                             dataType: "json",
                             delay: 200,
                             data: {
@@ -51,7 +51,7 @@ class Tillit {
                                     } else {
                                         items.push({
                                             value: '',
-                                            label: tillit.search_empty_text
+                                            label: two.search_empty_text
                                         })
                                     }
                                     response(items);
@@ -59,7 +59,7 @@ class Tillit {
                                     var items = [];
                                     items.push({
                                         value: '',
-                                        label: tillit.search_empty_text
+                                        label: two.search_empty_text
                                     })
                                 }
                             },
@@ -69,12 +69,12 @@ class Tillit {
                     select: function (event, ui) {
                         $billingCompany.val(ui.item.value);
 
-                        if (tillit.company_id_search === '1') {
+                        if (two.company_id_search === '1') {
                             $("input[name='companyid']").val(ui.item.company_id);
                         }
 
                         $.ajax({
-                            url: tillit.checkout_host + '/v1/' + tillit.countries[id_country] + '/company/' + ui.item.company_id + '/address?client=' + tillit.client + '&client_v=' + tillit.client_version,
+                            url: two.checkout_host + '/v1/' + two.countries[id_country] + '/company/' + ui.item.company_id + '/address?client=' + two.client + '&client_v=' + two.client_version,
                             dataType: "json",
                             success: function (response) {
                                 if (response.address) {
@@ -101,10 +101,10 @@ class Tillit {
         if (!typevalue) {
             $('select[name="account_type"]').val("business");
         }
-        Tillit.toggleCompanyFields("business");
+        Two_payment.toggleCompanyFields("business");
 
         $('select[name="account_type"]').on('change', function () {
-            Tillit.toggleCompanyFields(this.value);
+            Two_payment.toggleCompanyFields(this.value);
         });
     }
 
@@ -141,26 +141,26 @@ class Tillit {
                 "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
         });
         $('.iti__selected-flag .iti__flag').removeClass('iti__us');
-        $('.iti__selected-flag .iti__flag').addClass(' iti__' + tillit.countries[id_country]);
+        $('.iti__selected-flag .iti__flag').addClass(' iti__' + two.countries[id_country]);
     }
 }
 
 
 $(document).ready(function () {
 
-    new Tillit()
+    new Two_payment()
 
     if (typeof prestashop !== 'undefined') {
         prestashop.on(
                 'updatedAddressForm',
                 function () {
-                    new Tillit()
+                    new Two_payment()
                 }
         );
         prestashop.on(
                 'updateDeliveryForm',
                 function () {
-                    new Tillit()
+                    new Two_payment()
                 }
         );
     }
