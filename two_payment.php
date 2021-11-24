@@ -11,7 +11,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class Two_payment extends PaymentModule
+class Two_Payment extends PaymentModule
 {
 
     protected $output = '';

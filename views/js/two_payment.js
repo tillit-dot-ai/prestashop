@@ -4,7 +4,7 @@
  * @license Two Commercial License
  */
 
-class Two_payment {
+class Two_Payment {
 
     constructor()
     {
@@ -16,8 +16,8 @@ class Two_payment {
             return;
         }
 
-        Two_payment.selectAccountType();
-        Two_payment.setInternationalPhoneDropDown(id_country);
+        Two_Payment.selectAccountType();
+        Two_Payment.setInternationalPhoneDropDown(id_country);
 
         if (two.company_name_search === '1') {
 
@@ -101,10 +101,10 @@ class Two_payment {
         if (!typevalue) {
             $('select[name="account_type"]').val("business");
         }
-        Two_payment.toggleCompanyFields("business");
+        Two_Payment.toggleCompanyFields("business");
 
         $('select[name="account_type"]').on('change', function () {
-            Two_payment.toggleCompanyFields(this.value);
+            Two_Payment.toggleCompanyFields(this.value);
         });
     }
 
@@ -148,19 +148,19 @@ class Two_payment {
 
 $(document).ready(function () {
 
-    new Two_payment()
+    new Two_Payment()
 
     if (typeof prestashop !== 'undefined') {
         prestashop.on(
                 'updatedAddressForm',
                 function () {
-                    new Two_payment()
+                    new Two_Payment()
                 }
         );
         prestashop.on(
                 'updateDeliveryForm',
                 function () {
-                    new Two_payment()
+                    new Two_Payment()
                 }
         );
     }
