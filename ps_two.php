@@ -909,10 +909,10 @@ class Tillit extends PaymentModule
                 'countries' => $param_countries,
         )));
         $this->context->controller->addJqueryUI('ui.autocomplete');
-        $this->context->controller->registerStylesheet('tillit-intl-tel-css', 'modules/tillit/views/css/intlTelInput.css', array('priority' => 200, 'media' => 'all'));
-        $this->context->controller->registerStylesheet('tillit-css', 'modules/tillit/views/css/tillit.css', array('priority' => 200, 'media' => 'all'));
-        $this->context->controller->registerJavascript('tillit-intl-tel-script', 'modules/tillit/views/js/intlTelInput.min.js', array('priority' => 200, 'attribute' => 'async'));
-        $this->context->controller->registerJavascript('tillit-script', 'modules/tillit/views/js/tillit.js', array('priority' => 200, 'attribute' => 'async'));
+        $this->context->controller->registerStylesheet('tillit-intl-tel-css', 'modules/ps_two/views/css/intlTelInput.css', array('priority' => 200, 'media' => 'all'));
+        $this->context->controller->registerStylesheet('tillit-css', 'modules/ps_two/views/css/two.css', array('priority' => 200, 'media' => 'all'));
+        $this->context->controller->registerJavascript('tillit-intl-tel-script', 'modules/ps_two/views/js/intlTelInput.min.js', array('priority' => 200, 'attribute' => 'async'));
+        $this->context->controller->registerJavascript('tillit-script', 'modules/ps_two/views/js/two.js', array('priority' => 200, 'attribute' => 'async'));
     }
 
     public function hookPaymentOptions($params)
@@ -968,8 +968,8 @@ class Tillit extends PaymentModule
             ->setCallToActionText($title)
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', array(), true))
             ->setInputs(['token' => ['name' => 'token', 'type' => 'hidden', 'value' => Tools::getToken(false)]])
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'tillit/views/img/tillit.png'))
-            ->setAdditionalInformation($this->context->smarty->fetch('module:tillit/views/templates/hook/paymentinfo.tpl'));
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'ps_two/views/img/two.png'))
+            ->setAdditionalInformation($this->context->smarty->fetch('module:ps_two/views/templates/hook/paymentinfo.tpl'));
 
         return $preTillitOption;
     }
@@ -1039,7 +1039,7 @@ class Tillit extends PaymentModule
     public function getTillitIntentOrderData($cart, $cutomer, $currency, $address)
     {
         $request_data = array(
-            'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'gross_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
             'buyer' => array(
                 'company' => array(
                     'company_name' => $address->company,
@@ -1061,13 +1061,13 @@ class Tillit extends PaymentModule
                 array(
                     'name' => 'Cart',
                     'description' => '',
-                    'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
-                    'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
-                    'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
-                    'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+                    'gross_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+                    'net_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+                    'discount_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+                    'tax_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
                     'tax_class_name' => 'VAT ' . Tools::ps_round($cart->getAverageProductsTaxRate() * 100) . '%',
-                    'tax_rate' => strval($cart->getAverageProductsTaxRate() * 100),
-                    'unit_price' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+                    'tax_rate' => (string)($cart->getAverageProductsTaxRate() * 100),
+                    'unit_price' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
                     'quantity' => 1,
                     'quantity_unit' => 'item',
                     'image_url' => '',
@@ -1100,14 +1100,14 @@ class Tillit extends PaymentModule
         }
 
         $request_data = array(
-            'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
-            'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+            'gross_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'net_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
             'currency' => $currency->iso_code,
-            'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+            'discount_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
             'discount_rate' => '0',
             'invoice_type' => $this->product_type,
-            'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
-            'tax_rate' => strval($cart->getAverageProductsTaxRate()),
+            'tax_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+            'tax_rate' => (string)($cart->getAverageProductsTaxRate()),
             'buyer' => array(
                 'company' => array(
                     'company_name' => $invoice_address->company,
@@ -1125,8 +1125,8 @@ class Tillit extends PaymentModule
             'buyer_department' => $invoice_address->department,
             'buyer_project' => $invoice_address->project,
             'merchant_additional_info' => '',
-            'merchant_order_id' => strval($id_order),
-            'merchant_reference' => strval($order_reference),
+            'merchant_order_id' => (string)($id_order),
+            'merchant_reference' => (string)($order_reference),
             'merchant_urls' => array(
                 'merchant_confirmation_url' => $this->context->link->getModuleLink($this->name, 'confirmation', array('id_order' => $id_order), true),
                 'merchant_cancel_order_url' => $this->context->link->getModuleLink($this->name, 'cancel', array('id_order' => $id_order), true),
@@ -1178,18 +1178,18 @@ class Tillit extends PaymentModule
         }
 
         $request_data = array(
-            'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
-            'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+            'gross_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'net_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
             'currency' => $currency->iso_code,
-            'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+            'discount_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
             'discount_rate' => '0',
             'invoice_type' => $this->product_type,
-            'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
-            'tax_rate' => strval($cart->getAverageProductsTaxRate()),
+            'tax_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+            'tax_rate' => (string)($cart->getAverageProductsTaxRate()),
             'buyer_department' => $invoice_address->department,
             'buyer_project' => $invoice_address->project,
             'merchant_additional_info' => '',
-            'merchant_reference' => strval($orderpaymentdata['tillit_order_reference']),
+            'merchant_reference' => (string)($orderpaymentdata['tillit_order_reference']),
             'billing_address' => array(
                 'city' => $invoice_address->city,
                 'country' => Country::getIsoById($invoice_address->id_country),
@@ -1225,7 +1225,7 @@ class Tillit extends PaymentModule
         $currency = new Currency($cart->id_currency);
 
         $request_data = [
-            'amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
             'currency' => $currency->iso_code,
             'initiate_payment_to_buyer' => $this->enable_buyer_refund === '1',
             'line_items' => $this->getTillitProductItems($cart),
@@ -1246,13 +1246,13 @@ class Tillit extends PaymentModule
             $product = array(
                 'name' => $line_item['name'],
                 'description' => Tools::substr($line_item['description_short'], 0, 255),
-                'gross_amount' => strval($this->getTillitRoundAmount($line_item['total_wt'])),
-                'net_amount' => strval($this->getTillitRoundAmount($line_item['total'])),
-                'discount_amount' => strval($this->getTillitRoundAmount($line_item['reduction'])),
-                'tax_amount' => strval($this->getTillitRoundAmount($line_item['total_wt'] - $line_item['total'])),
+                'gross_amount' => (string)($this->getTillitRoundAmount($line_item['total_wt'])),
+                'net_amount' => (string)($this->getTillitRoundAmount($line_item['total'])),
+                'discount_amount' => (string)($this->getTillitRoundAmount($line_item['reduction'])),
+                'tax_amount' => (string)($this->getTillitRoundAmount($line_item['total_wt'] - $line_item['total'])),
                 'tax_class_name' => 'VAT ' . $line_item['rate'] . '%',
-                'tax_rate' => strval($this->getTillitRoundAmount($line_item['rate'] / 100)),
-                'unit_price' => strval($this->getTillitRoundAmount($line_item['price_wt'])),
+                'tax_rate' => (string)($this->getTillitRoundAmount($line_item['rate'] / 100)),
+                'unit_price' => (string)($this->getTillitRoundAmount($line_item['price_wt'])),
                 'quantity' => $line_item['cart_quantity'],
                 'quantity_unit' => 'item',
                 'image_url' => $imagePath,
@@ -1287,13 +1287,13 @@ class Tillit extends PaymentModule
             $shipping_line = array(
                 'name' => 'Shipping - ' . $carrier->name,
                 'description' => '',
-                'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_SHIPPING))),
-                'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
+                'gross_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_SHIPPING))),
+                'net_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
                 'discount_amount' => '0',
-                'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_SHIPPING) - $cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
+                'tax_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_SHIPPING) - $cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
                 'tax_class_name' => 'VAT ' . $tax_rate . '%',
-                'tax_rate' => strval($cart->getAverageProductsTaxRate()),
-                'unit_price' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
+                'tax_rate' => (string)($cart->getAverageProductsTaxRate()),
+                'unit_price' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
                 'quantity' => 1,
                 'quantity_unit' => 'sc', // shipment charge
                 'image_url' => '',
@@ -1309,13 +1309,13 @@ class Tillit extends PaymentModule
             $discount_line = array(
                 'name' => 'Discount',
                 'description' => '',
-                'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
-                'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
+                'gross_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+                'net_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
                 'discount_amount' => '0',
-                'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS) - $cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
+                'tax_amount' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS) - $cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
                 'tax_class_name' => 'VAT ' . $tax_rate . '%',
-                'tax_rate' => strval($cart->getAverageProductsTaxRate()),
-                'unit_price' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
+                'tax_rate' => (string)($cart->getAverageProductsTaxRate()),
+                'unit_price' => (string)($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
                 'quantity' => 1,
                 'quantity_unit' => 'item',
                 'image_url' => '',
@@ -1493,7 +1493,7 @@ class Tillit extends PaymentModule
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
             ));
-            return $this->context->smarty->fetch('module:tillit/views/templates/hook/displayPaymentReturn.tpl');
+            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayPaymentReturn.tpl');
         }
     }
 
@@ -1505,7 +1505,7 @@ class Tillit extends PaymentModule
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
             ));
-            return $this->context->smarty->fetch('module:tillit/views/templates/hook/displayOrderDetail.tpl');
+            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayOrderDetail.tpl');
         }
     }
 
@@ -1517,7 +1517,7 @@ class Tillit extends PaymentModule
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
             ));
-            return $this->context->smarty->fetch('module:tillit/views/templates/hook/displayAdminOrderLeft.tpl');
+            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayAdminOrderLeft.tpl');
         }
     }
 
@@ -1526,7 +1526,7 @@ class Tillit extends PaymentModule
         $id_order = $params['id_order'];
         $tillitpaymentdata = $this->getTillitOrderPaymentData($id_order);
         if ($tillitpaymentdata) {
-            return $this->context->smarty->fetch('module:tillit/views/templates/hook/displayAdminOrderTabLink.tpl');
+            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayAdminOrderTabLink.tpl');
         }
     }
 
@@ -1539,7 +1539,7 @@ class Tillit extends PaymentModule
             $this->context->smarty->assign(array(
                 'tillitpaymentdata' => $tillitpaymentdata,
             ));
-            return $this->context->smarty->fetch('module:tillit/views/templates/hook/displayAdminOrderTabContent.tpl');
+            return $this->context->smarty->fetch('module:ps_two/views/templates/hook/displayAdminOrderTabContent.tpl');
         }
     }
 }
