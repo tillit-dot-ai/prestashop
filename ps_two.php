@@ -19,7 +19,7 @@ class Tillit extends PaymentModule
 
     public function __construct()
     {
-        $this->name = 'two';
+        $this->name = 'ps_two';
         $this->tab = 'payments_gateways';
         $this->version = '1.2.0';
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
@@ -29,7 +29,7 @@ class Tillit extends PaymentModule
         $this->author_address = '';
         parent::__construct();
         $this->languages = Language::getLanguages(false);
-        $this->displayName = $this->l('Two Payment');
+        $this->displayName = $this->l('Two - BNPL for businesses');
         $this->description = $this->l('This module allows any merchant to accept payments with Two payment gateway.');
         $this->merchant_short_name = Configuration::get('PS_TILLIT_MERACHANT_SHORT_NAME');
         $this->api_key = Configuration::get('PS_TILLIT_MERACHANT_API_KEY');
@@ -476,7 +476,7 @@ class Tillit extends PaymentModule
                 'type' => 'text',
                 'name' => 'PS_TILLIT_PAYMENT_DEV_MODE',
                 'label' => $this->l('Two test server'),
-                'desc' => $this->l('Enter your stagiing development url.'),
+                'desc' => $this->l('Enter your staging development url.'),
                 'required' => true,
             );
         } else {
@@ -1039,7 +1039,7 @@ class Tillit extends PaymentModule
     public function getTillitIntentOrderData($cart, $cutomer, $currency, $address)
     {
         $request_data = array(
-            'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'gross_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
             'buyer' => array(
                 'company' => array(
                     'company_name' => $address->company,
@@ -1061,13 +1061,13 @@ class Tillit extends PaymentModule
                 array(
                     'name' => 'Cart',
                     'description' => '',
-                    'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
-                    'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
-                    'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
-                    'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+                    'gross_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+                    'net_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+                    'discount_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+                    'tax_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
                     'tax_class_name' => 'VAT ' . Tools::ps_round($cart->getAverageProductsTaxRate() * 100) . '%',
-                    'tax_rate' => strval($cart->getAverageProductsTaxRate() * 100),
-                    'unit_price' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+                    'tax_rate' => cast($cart->getAverageProductsTaxRate() * 100),
+                    'unit_price' => cast($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
                     'quantity' => 1,
                     'quantity_unit' => 'item',
                     'image_url' => '',
@@ -1100,14 +1100,14 @@ class Tillit extends PaymentModule
         }
 
         $request_data = array(
-            'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
-            'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+            'gross_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'net_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
             'currency' => $currency->iso_code,
-            'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+            'discount_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
             'discount_rate' => '0',
             'invoice_type' => $this->product_type,
-            'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
-            'tax_rate' => strval($cart->getAverageProductsTaxRate()),
+            'tax_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+            'tax_rate' => cast($cart->getAverageProductsTaxRate()),
             'buyer' => array(
                 'company' => array(
                     'company_name' => $invoice_address->company,
@@ -1125,8 +1125,8 @@ class Tillit extends PaymentModule
             'buyer_department' => $invoice_address->department,
             'buyer_project' => $invoice_address->project,
             'merchant_additional_info' => '',
-            'merchant_order_id' => strval($id_order),
-            'merchant_reference' => strval($order_reference),
+            'merchant_order_id' => cast($id_order),
+            'merchant_reference' => cast($order_reference),
             'merchant_urls' => array(
                 'merchant_confirmation_url' => $this->context->link->getModuleLink($this->name, 'confirmation', array('id_order' => $id_order), true),
                 'merchant_cancel_order_url' => $this->context->link->getModuleLink($this->name, 'cancel', array('id_order' => $id_order), true),
@@ -1178,18 +1178,18 @@ class Tillit extends PaymentModule
         }
 
         $request_data = array(
-            'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
-            'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
+            'gross_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'net_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::BOTH))),
             'currency' => $currency->iso_code,
-            'discount_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+            'discount_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
             'discount_rate' => '0',
             'invoice_type' => $this->product_type,
-            'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
-            'tax_rate' => strval($cart->getAverageProductsTaxRate()),
+            'tax_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH) - $cart->getOrderTotal(false, Cart::BOTH))),
+            'tax_rate' => cast($cart->getAverageProductsTaxRate()),
             'buyer_department' => $invoice_address->department,
             'buyer_project' => $invoice_address->project,
             'merchant_additional_info' => '',
-            'merchant_reference' => strval($orderpaymentdata['tillit_order_reference']),
+            'merchant_reference' => cast($orderpaymentdata['tillit_order_reference']),
             'billing_address' => array(
                 'city' => $invoice_address->city,
                 'country' => Country::getIsoById($invoice_address->id_country),
@@ -1225,7 +1225,7 @@ class Tillit extends PaymentModule
         $currency = new Currency($cart->id_currency);
 
         $request_data = [
-            'amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
+            'amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::BOTH))),
             'currency' => $currency->iso_code,
             'initiate_payment_to_buyer' => $this->enable_buyer_refund === '1',
             'line_items' => $this->getTillitProductItems($cart),
@@ -1246,13 +1246,13 @@ class Tillit extends PaymentModule
             $product = array(
                 'name' => $line_item['name'],
                 'description' => Tools::substr($line_item['description_short'], 0, 255),
-                'gross_amount' => strval($this->getTillitRoundAmount($line_item['total_wt'])),
-                'net_amount' => strval($this->getTillitRoundAmount($line_item['total'])),
-                'discount_amount' => strval($this->getTillitRoundAmount($line_item['reduction'])),
-                'tax_amount' => strval($this->getTillitRoundAmount($line_item['total_wt'] - $line_item['total'])),
+                'gross_amount' => cast($this->getTillitRoundAmount($line_item['total_wt'])),
+                'net_amount' => cast($this->getTillitRoundAmount($line_item['total'])),
+                'discount_amount' => cast($this->getTillitRoundAmount($line_item['reduction'])),
+                'tax_amount' => cast($this->getTillitRoundAmount($line_item['total_wt'] - $line_item['total'])),
                 'tax_class_name' => 'VAT ' . $line_item['rate'] . '%',
-                'tax_rate' => strval($this->getTillitRoundAmount($line_item['rate'] / 100)),
-                'unit_price' => strval($this->getTillitRoundAmount($line_item['price_wt'])),
+                'tax_rate' => cast($this->getTillitRoundAmount($line_item['rate'] / 100)),
+                'unit_price' => cast($this->getTillitRoundAmount($line_item['price_wt'])),
                 'quantity' => $line_item['cart_quantity'],
                 'quantity_unit' => 'item',
                 'image_url' => $imagePath,
@@ -1287,13 +1287,13 @@ class Tillit extends PaymentModule
             $shipping_line = array(
                 'name' => 'Shipping - ' . $carrier->name,
                 'description' => '',
-                'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_SHIPPING))),
-                'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
+                'gross_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_SHIPPING))),
+                'net_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
                 'discount_amount' => '0',
-                'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_SHIPPING) - $cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
+                'tax_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_SHIPPING) - $cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
                 'tax_class_name' => 'VAT ' . $tax_rate . '%',
-                'tax_rate' => strval($cart->getAverageProductsTaxRate()),
-                'unit_price' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
+                'tax_rate' => cast($cart->getAverageProductsTaxRate()),
+                'unit_price' => cast($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_SHIPPING))),
                 'quantity' => 1,
                 'quantity_unit' => 'sc', // shipment charge
                 'image_url' => '',
@@ -1309,13 +1309,13 @@ class Tillit extends PaymentModule
             $discount_line = array(
                 'name' => 'Discount',
                 'description' => '',
-                'gross_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
-                'net_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
+                'gross_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS))),
+                'net_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
                 'discount_amount' => '0',
-                'tax_amount' => strval($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS) - $cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
+                'tax_amount' => cast($this->getTillitRoundAmount($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS) - $cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
                 'tax_class_name' => 'VAT ' . $tax_rate . '%',
-                'tax_rate' => strval($cart->getAverageProductsTaxRate()),
-                'unit_price' => strval($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
+                'tax_rate' => cast($cart->getAverageProductsTaxRate()),
+                'unit_price' => cast($this->getTillitRoundAmount($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS))),
                 'quantity' => 1,
                 'quantity_unit' => 'item',
                 'image_url' => '',
@@ -1349,13 +1349,13 @@ class Tillit extends PaymentModule
     {
         $hostname = str_replace(array('http://', 'https://'), '', $_SERVER['SERVER_NAME']);
 
-        if (in_array($hostname, array('dev.tillitlocal.ai', 'localhost')) || substr($hostname, 0, 10) === 'localhost:') {
+        if (in_array($hostname, array('dev.tillitlocal.ai', 'localhost')) || Tools::substr($hostname, 0, 10) === 'localhost:') {
             return true;
         }
 
-        if (strlen($hostname) > 10 && substr($hostname, -10) === '.tillit.ai') {
+        if (strlen($hostname) > 8 && Tools::substr($hostname, -8) === '.two.inc') {
             $tillit_prod_sites = array('shop', 'morgenlevering', 'arkwrightx', 'paguro');
-            $host_prefix = substr($hostname, 0, -10);
+            $host_prefix = Tools::substr($hostname, 0, -8);
 
             foreach ($tillit_prod_sites as $tillit_prod_site) {
                 if ($host_prefix === $tillit_prod_site || $host_prefix === ('www.' . $tillit_prod_site)) {

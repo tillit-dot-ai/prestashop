@@ -212,9 +212,9 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
             }
         }
         return $this->addConstraints(
-                $this->addMaxLength(
-                    $format
-                )
+            $this->addMaxLength(
+                $format
+            )
         );
     }
 

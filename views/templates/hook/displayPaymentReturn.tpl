@@ -10,6 +10,9 @@
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
             <tbody>
+
+            <tbody>
+                <tr><td><strong>{l s='Two Order Reference' mod='two'}</strong></td> <td>{$tillitpaymentdata.tillit_order_reference}</td></tr>
                 {if $tillitpaymentdata.tillit_order_id}
                     <tr><td><strong>{l s='Two Order ID' mod='two'}</strong></td> <td>{$tillitpaymentdata.tillit_order_id}</td></tr>
                 {/if}
