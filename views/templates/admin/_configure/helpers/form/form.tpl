@@ -17,7 +17,7 @@
                         <input id="{$input.name}-name" type="text" class="disabled" name="filename" readonly />
                         <span class="input-group-btn">
                             <button id="{$input.name}-selectbutton" type="button" name="submitAddAttachments" class="btn btn-default">
-                                <i class="icon-folder-open"></i> {l s='Choose a file' mod='two'}
+                                <i class="icon-folder-open"></i> {l s='Choose a file' mod='ps_two'}
                             </button>
                         </span>
                     </div>
@@ -29,7 +29,7 @@
                     <div id="{$input.name}-images-thumbnails" class="col-lg-12">
                         <img src="{$uri}views/img/{$fields_value[$input.name]}" class="img-thumbnail" style="height: 70px;"/>
                         <a class="btn btn-default" href="{$current}&{$identifier}={$form_id|intval}&token={$token}&deleteLogo=1">
-                            <i class="icon-trash"></i> {l s='Delete' mod='two'}
+                            <i class="icon-trash"></i> {l s='Delete' mod='ps_two'}
                         </a>
                     </div>
                 {/if}

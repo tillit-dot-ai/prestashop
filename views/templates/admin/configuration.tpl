@@ -8,9 +8,9 @@
 <div class="row">
     <div id="tillit-tabs" class="col-lg-2 col-md-3">
         <div class="list-group">
-            <a class="list-group-item {if $tillittabvalue == 1}active{/if}" href="#general-settings" aria-controls="general-settings" role="tab" data-toggle="tab">{l s='General Settings' mod='two'}</a>
-            <a class="list-group-item {if $tillittabvalue == 2}active{/if}" href="#other-settings" aria-controls="other-settings" role="tab" data-toggle="tab">{l s='Other Settings' mod='two'}</a>
-            <a class="list-group-item {if $tillittabvalue == 3}active{/if}" href="#order-status-settings" aria-controls="order-status-settings" role="tab" data-toggle="tab">{l s='Order Status Settings' mod='two'}</a>
+            <a class="list-group-item {if $tillittabvalue == 1}active{/if}" href="#general-settings" aria-controls="general-settings" role="tab" data-toggle="tab">{l s='General Settings' mod='ps_two'}</a>
+            <a class="list-group-item {if $tillittabvalue == 2}active{/if}" href="#other-settings" aria-controls="other-settings" role="tab" data-toggle="tab">{l s='Other Settings' mod='ps_two'}</a>
+            <a class="list-group-item {if $tillittabvalue == 3}active{/if}" href="#order-status-settings" aria-controls="order-status-settings" role="tab" data-toggle="tab">{l s='Order Status Settings' mod='ps_two'}</a>
         </div>
     </div>
     <div class="col-lg-10 col-md-9">

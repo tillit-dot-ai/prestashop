@@ -7,8 +7,7 @@
 *}
 
 <li class="nav-item">
-    <a href="#tillit-payment-info" class="nav-link" data-toggle="tab" role="tab">
-        {l s='Two Payment Info' mod='two'}
-    </a>
+  <a href="#tillit-payment-info" class="nav-link" data-toggle="tab" role="tab">
+    {l s='Two Payment Info' mod='ps_two'}
+  </a>
 </li>
-
