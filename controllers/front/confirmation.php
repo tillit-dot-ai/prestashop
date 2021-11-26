@@ -1,12 +1,11 @@
 <?php
 /**
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
  */
 
-class TillitConfirmationModuleFrontController extends ModuleFrontController
+class TwopaymentConfirmationModuleFrontController extends ModuleFrontController
 {
 
     public function __construct()
@@ -25,33 +24,33 @@ class TillitConfirmationModuleFrontController extends ModuleFrontController
             $order = new Order((int) $id_order);
             $customer = new Customer($order->id_customer);
             
-            $orderpaymentdata = $this->module->getTillitOrderPaymentData($id_order);
-            if ($orderpaymentdata && isset($orderpaymentdata['tillit_order_id'])) {
-                $tillit_order_id = $orderpaymentdata['tillit_order_id'];
+            $orderpaymentdata = $this->module->getTwoOrderPaymentData($id_order);
+            if ($orderpaymentdata && isset($orderpaymentdata['two_order_id'])) {
+                $two_order_id = $orderpaymentdata['two_order_id'];
                 
-                $response = $this->module->setTillitPaymentRequest('/v1/order/' . $tillit_order_id, [], 'GET');
-                $tillit_err = $this->module->getTillitErrorMessage($response);
-                if ($tillit_err) {
+                $response = $this->module->setTwoPaymentRequest('/v1/order/' . $two_order_id, [], 'GET');
+                $two_err = $this->module->getTwoErrorMessage($response);
+                if ($two_err) {
                     $this->restoreDuplicateCart($order->id, $customer->id);
-                    $this->chnageOrderStatus($order->id, Configuration::get('PS_TILLIT_OS_ERROR'));
-                    $message = ($tillit_err != '') ? $tillit_err : $this->module->l('Unable to retrieve the order payment information please contact store owner.');
+                    $this->chnageOrderStatus($order->id, Configuration::get('PS_TWO_OS_ERROR'));
+                    $message = ($two_err != '') ? $two_err : $this->module->l('Unable to retrieve the order payment information please contact store owner.');
                     $this->errors[] = $message;
                     $this->redirectWithNotifications('index.php?controller=order');
                 }
 
                 if (isset($response['state']) && $response['state'] == 'VERIFIED') {
                     $payment_data = array(
-                        'tillit_order_id' => $response['id'],
-                        'tillit_order_reference' => $response['merchant_reference'],
-                        'tillit_order_state' => $response['state'],
-                        'tillit_order_status' => $response['status'],
-                        'tillit_day_on_invoice' => $this->module->day_on_invoice,
-                        'tillit_invoice_url' => $response['invoice_url'],
+                        'two_order_id' => $response['id'],
+                        'two_order_reference' => $response['merchant_reference'],
+                        'two_order_state' => $response['state'],
+                        'two_order_status' => $response['status'],
+                        'two_day_on_invoice' => $this->module->day_on_invoice,
+                        'two_invoice_url' => $response['invoice_url'],
                     );
-                    $this->module->setTillitOrderPaymentData($order->id, $payment_data);
+                    $this->module->setTwoOrderPaymentData($order->id, $payment_data);
                 }
             }
-            $this->chnageOrderStatus($order->id, Configuration::get('PS_TILLIT_OS_PREPARATION'));
+            $this->chnageOrderStatus($order->id, Configuration::get('PS_TWO_OS_PREPARATION'));
             Tools::redirect('index.php?controller=order-confirmation&id_cart=' . $order->id_cart . '&id_module=' . $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
         } else {
             $message = $this->module->l('Unable to find the requested order please contact store owner.');

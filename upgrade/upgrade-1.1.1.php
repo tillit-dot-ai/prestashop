@@ -1,9 +1,8 @@
 <?php
 /**
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -12,6 +11,6 @@ if (!defined('_PS_VERSION_')) {
 
 function upgrade_module_1_1_1($object)
 {
-    Configuration::updateValue('PS_TILLIT_PAYMENT_DEV_MODE', 'https://staging.api.tillit.ai');
+    Configuration::updateValue('PS_twopayment_DEV_MODE', 'https://staging.api.tillit.ai');
     return true;
 }
