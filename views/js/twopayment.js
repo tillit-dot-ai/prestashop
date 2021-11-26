@@ -4,7 +4,7 @@
  * @license Two Commercial License
  */
 
-class Two_Payment {
+class Twopayment {
 
     constructor()
     {
@@ -16,10 +16,10 @@ class Two_Payment {
             return;
         }
 
-        Two_Payment.selectAccountType();
-        Two_Payment.setInternationalPhoneDropDown(id_country);
+        Twopayment.selectAccountType();
+        Twopayment.setInternationalPhoneDropDown(id_country);
 
-        if (two.company_name_search === '1') {
+        if (twopayment.company_name_search === '1') {
 
             const $billingCompany = $checkout.find('input[name="company"]');
 
@@ -30,7 +30,7 @@ class Two_Payment {
                     },
                     source: function (request, response) {
                         $.ajax({
-                            url: 'https://' + two.countries[id_country] + '.search.tillit.ai/search?limit=50&offset=0',
+                            url: 'https://' + twopayment.countries[id_country] + '.search.tillit.ai/search?limit=50&offset=0',
                             dataType: "json",
                             delay: 200,
                             data: {
@@ -51,7 +51,7 @@ class Two_Payment {
                                     } else {
                                         items.push({
                                             value: '',
-                                            label: two.search_empty_text
+                                            label: twopayment.search_empty_text
                                         })
                                     }
                                     response(items);
@@ -59,7 +59,7 @@ class Two_Payment {
                                     var items = [];
                                     items.push({
                                         value: '',
-                                        label: two.search_empty_text
+                                        label: twopayment.search_empty_text
                                     })
                                 }
                             },
@@ -69,12 +69,12 @@ class Two_Payment {
                     select: function (event, ui) {
                         $billingCompany.val(ui.item.value);
 
-                        if (two.company_id_search === '1') {
+                        if (twopayment.company_id_search === '1') {
                             $("input[name='companyid']").val(ui.item.company_id);
                         }
 
                         $.ajax({
-                            url: two.checkout_host + '/v1/' + two.countries[id_country] + '/company/' + ui.item.company_id + '/address?client=' + two.client + '&client_v=' + two.client_version,
+                            url: twopayment.checkout_host + '/v1/' + twopayment.countries[id_country] + '/company/' + ui.item.company_id + '/address?client=' + twopayment.client + '&client_v=' + twopayment.client_version,
                             dataType: "json",
                             success: function (response) {
                                 if (response.address) {
@@ -101,10 +101,10 @@ class Two_Payment {
         if (!typevalue) {
             $('select[name="account_type"]').val("business");
         }
-        Two_Payment.toggleCompanyFields("business");
+        Twopayment.toggleCompanyFields("business");
 
         $('select[name="account_type"]').on('change', function () {
-            Two_Payment.toggleCompanyFields(this.value);
+            Twopayment.toggleCompanyFields(this.value);
         });
     }
 
@@ -141,27 +141,27 @@ class Two_Payment {
                 "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
         });
         $('.iti__selected-flag .iti__flag').removeClass('iti__us');
-        $('.iti__selected-flag .iti__flag').addClass(' iti__' + two.countries[id_country]);
+        $('.iti__selected-flag .iti__flag').addClass(' iti__' + twopayment.countries[id_country]);
     }
 }
 
 
 $(document).ready(function () {
 
-    new Two_Payment()
+    new Twopayment()
 
     if (typeof prestashop !== 'undefined') {
         prestashop.on(
-                'updatedAddressForm',
-                function () {
-                    new Two_Payment()
-                }
+            'updatedAddressForm',
+            function () {
+                new Twopayment()
+            }
         );
         prestashop.on(
-                'updateDeliveryForm',
-                function () {
-                    new Two_Payment()
-                }
+            'updateDeliveryForm',
+            function () {
+                new Twopayment()
+            }
         );
     }
 });

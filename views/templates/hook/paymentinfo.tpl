@@ -2,8 +2,7 @@
  * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
  * @copyright Since 2021 Two Team
  * @license Two Commercial License
- */
-*}
+ *}
 
 <section>
     <p>{$subtitle}</p>
@@ -22,15 +21,15 @@
             var payments = document.getElementsByName('payment-option');
             for (var i = 0, length = payments.length; i < length; i++) {
                 var payment = payments[i].getAttribute('data-module-name');
-                if (payment == 'two') {
+                if (payment == "twopayment") {
                     var dataID = payments[i].getAttribute('id');
                     if (payment_enable == '1') {
                         document.getElementById(dataID).checked = true;
                     } else {
-                        document.getElementById(dataID + "-container").classList.add("tillit-payment-option");
+                        document.getElementById(dataID + "-container").classList.add("two-payment-option");
                         document.getElementById(dataID).disabled = true;
                     }
-                    document.getElementById(dataID + "-additional-information").classList.add("tillit-additional-information");
+                    document.getElementById(dataID + "-additional-information").classList.add("two-additional-information");
                 }
             }
         </script>

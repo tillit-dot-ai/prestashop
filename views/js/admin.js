@@ -5,6 +5,6 @@
  */
 
 $(document).ready(function(){
-   $('#PS_TILLIT_PRODUCT_TYPE option[value="product_merchant"]').prop('disabled',true);
-   $('#PS_TILLIT_PRODUCT_TYPE option[value="product_administered"]').prop('disabled',true);
+   $('#PS_TWO_PRODUCT_TYPE option[value="product_merchant"]').prop('disabled',true);
+   $('#PS_TWO_PRODUCT_TYPE option[value="product_administered"]').prop('disabled',true);
 });

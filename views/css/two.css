@@ -4,11 +4,15 @@
  * @license Two Commercial License
  */
 
-.tillit-payment-option .custom-radio  {
+/* .js-address-form .ui-autocomplete-loading {
+  background: white url("../img/loader.gif") right center no-repeat;
+}*/
+
+.two-payment-option .custom-radio  {
     border: 2px solid #fff;
     background: #7a7a7a;
 }
-.tillit-additional-information {
+.two-additional-information {
     display: block !important;
 }
 .iti.iti--allow-dropdown {
