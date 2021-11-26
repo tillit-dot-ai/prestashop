@@ -1349,7 +1349,7 @@ class Twopayment extends PaymentModule
     {
         $hostname = str_replace(array('http://', 'https://'), '', $_SERVER['SERVER_NAME']);
 
-        if (in_array($hostname, array('tillit.ps.local', 'localhost')) || Tools::substr($hostname, 0, 8) === '.two.inc') {
+        if (in_array($hostname, array('tillit.ps.local', 'localhost')) || Tools::substr($hostname, -8) === '.two.inc') {
             return true;
         }
 
