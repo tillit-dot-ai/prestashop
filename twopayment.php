@@ -78,7 +78,7 @@ class Twopayment extends PaymentModule
         Configuration::updateValue('PS_TWO_TITLE', $installData['PS_TWO_TITLE']);
         Configuration::updateValue('PS_TWO_SUB_TITLE', $installData['PS_TWO_SUB_TITLE']);
         Configuration::updateValue('PS_TWO_PAYMENT_MODE', 'test');
-        Configuration::updateValue('PS_TWO_PAYMENT_DEV_MODE', 'https://staging.api.tillit.ai');
+        Configuration::updateValue('PS_TWO_PAYMENT_DEV_MODE', 'https://staging.api.two.inc');
         Configuration::updateValue('PS_TWO_MERACHANT_SHORT_NAME', '');
         Configuration::updateValue('PS_TWO_MERACHANT_API_KEY', '');
         Configuration::updateValue('PS_TWO_PRODUCT_TYPE', 'FUNDED_INVOICE');
