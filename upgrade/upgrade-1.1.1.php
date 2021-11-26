@@ -11,6 +11,6 @@ if (!defined('_PS_VERSION_')) {
 
 function upgrade_module_1_1_1($object)
 {
-    Configuration::updateValue('PS_TWO_PAYMENT_DEV_MODE', 'https://staging.api.tillit.ai');
+    Configuration::updateValue('PS_twopayment_DEV_MODE', 'https://staging.api.tillit.ai');
     return true;
 }
