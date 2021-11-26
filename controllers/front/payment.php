@@ -1,12 +1,11 @@
 <?php
 /**
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
  */
 
-class TillitPaymentModuleFrontController extends ModuleFrontController
+class TwopaymentPaymentModuleFrontController extends ModuleFrontController
 {
 
     public function __construct()
@@ -28,7 +27,7 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
 
         $authorized = false;
         foreach (Module::getPaymentModules() as $module) {
-            if ($module['name'] == 'tillit') {
+            if ($module['name'] == 'twopayment') {
                 $authorized = true;
                 break;
             }
@@ -46,16 +45,18 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
             $this->redirectWithNotifications('index.php?controller=order');
         }
 
-        //Tillit Create order
-        $this->module->validateOrder($cart->id, Configuration::get('PS_TILLIT_OS_AWAITING'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, null, array(), (int) $currency->id, false, $customer->secure_key);
+        //Two Create order
+        $this->module->validateOrder($cart->id, Configuration::get('PS_TWO_OS_AWAITING'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, null, array(), (int) $currency->id, false, $customer->secure_key);
 
-        $paymentdata = $this->module->getTillitNewOrderData($this->module->currentOrder, $cart);
+        $paymentdata = $this->module->getTwoNewOrderData($this->module->currentOrder, $cart);
 
-        $response = $this->module->setTillitPaymentRequest('/v1/order', $paymentdata, 'POST');
+        $response = $this->module->setTwoPaymentRequest('/v1/order', $paymentdata, 'POST');
+
+        //echo "<pre>";print_r($response);echo "</pre>";
 
         if (!isset($response)) {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
-            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TWO_OS_ERROR'));
             $message = $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
@@ -63,7 +64,7 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
 
         if (isset($response['result']) && $response['result'] === 'failure') {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
-            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TWO_OS_ERROR'));
             $message = $response;
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
@@ -71,32 +72,32 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
 
         if (isset($response['response']['code']) && ($response['response']['code'] === 401 || $response['response']['code'] === 403)) {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
-            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
-            $message = $this->module->l('Website is not properly configured with Tillit payment.');
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TWO_OS_ERROR'));
+            $message = $this->module->l('Website is not properly configured with Two payment.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
 
         if (isset($response['response']['code']) && $response['response']['code'] === 400) {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
-            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TWO_OS_ERROR'));
             $message = $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
 
-        $tillit_err = $this->module->getTillitErrorMessage($response);
-        if ($tillit_err) {
+        $two_err = $this->module->getTwoErrorMessage($response);
+        if ($two_err) {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
-            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
-            $message = ($tillit_err != '') ? $tillit_err : $this->module->l('Something went wrong please contact store owner.');
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TWO_OS_ERROR'));
+            $message = ($two_err != '') ? $two_err : $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
         }
 
         if (isset($response['response']['code']) && $response['response']['code'] >= 400) {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
-            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TWO_OS_ERROR'));
             $message = $this->module->l('EHF Invoice is not available for this order.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');
@@ -104,20 +105,20 @@ class TillitPaymentModuleFrontController extends ModuleFrontController
 
         if (isset($response['id']) && $response['id']) {
             $payment_data = array(
-                'tillit_order_id' => $response['id'],
-                'tillit_order_reference' => $response['merchant_reference'],
-                'tillit_order_state' => $response['state'],
-                'tillit_order_status' => $response['status'],
-                'tillit_day_on_invoice' => $this->module->day_on_invoice,
-                'tillit_invoice_url' => $response['invoice_url'],
+                'two_order_id' => $response['id'],
+                'two_order_reference' => $response['merchant_reference'],
+                'two_order_state' => $response['state'],
+                'two_order_status' => $response['status'],
+                'two_day_on_invoice' => $this->module->day_on_invoice,
+                'two_invoice_url' => $response['invoice_url'],
             );
 
-            $this->module->setTillitOrderPaymentData($this->module->currentOrder, $payment_data);
+            $this->module->setTwoOrderPaymentData($this->module->currentOrder, $payment_data);
 
             Tools::redirect($response['payment_url']);
         } else {
             $this->restoreDuplicateCart($this->module->currentOrder, $customer->id);
-            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TILLIT_OS_ERROR'));
+            $this->chnageOrderStatus($this->module->currentOrder, Configuration::get('PS_TWO_OS_ERROR'));
             $message = $this->module->l('Something went wrong please contact store owner.');
             $this->errors[] = $message;
             $this->redirectWithNotifications('index.php?controller=order');

@@ -1,9 +1,8 @@
 <?php
 /**
- * 2021 Tillit
- * @author Tillit
- * @copyright Tillit Team
- * @license Tillit Commercial License
+ * @author Plugin Developer from Two <jgang@two.inc> <support@two.inc>
+ * @copyright Since 2021 Two Team
+ * @license Two Commercial License
  */
 
 use Symfony\Component\Translation\TranslatorInterface;
@@ -40,7 +39,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
     {
         $fields = AddressFormat::getOrderedAddressFields($this->country->id, true, true);
         $required = array_flip(AddressFormat::getFieldsRequired());
-        if (Module::isInstalled('tillit') && Module::isEnabled('tillit')) {
+        if (Module::isInstalled('twopayment') && Module::isEnabled('twopayment')) {
             $format = [
                 'back' => (new FormField())
                     ->setName('back')
@@ -79,7 +78,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                     $formField->setType('number');
                 }
 
-                if (Configuration::get('PS_TILLIT_ENABLE_COMPANY_NAME')) {
+                if (Configuration::get('PS_TWO_ENABLE_COMPANY_NAME')) {
                     if ($field === 'company') {
                         $formField->addAvailableValue('placeholder', $this->translator->trans('Search your company name', [], 'Shop.Forms.Labels'));
                     }
@@ -212,11 +211,7 @@ class CustomerAddressFormatter extends CustomerAddressFormatterCore
                 }
             }
         }
-        return $this->addConstraints(
-                $this->addMaxLength(
-                    $format
-                )
-        );
+        return $this->addConstraints($this->addMaxLength($format));
     }
 
     private function addConstraints(array $format)
