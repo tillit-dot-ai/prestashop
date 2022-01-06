@@ -134,9 +134,14 @@ class Twopayment {
 
     static setInternationalPhoneDropDown(id_country)
     {
+        if(id_country == 23 || id_country == '23'){
+            var cnstr = '"no", "gb"';
+        } else {
+            var cnstr = '"gb", "no"';
+        }
         const phoneInputField = document.querySelector("input[name='phone']");
         const phoneInput = window.intlTelInput(phoneInputField, {
-            preferredCountries: ["no", "gb"],
+            preferredCountries: [cnstr],
             utilsScript:
                 "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
         });
