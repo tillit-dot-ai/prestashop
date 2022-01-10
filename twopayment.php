@@ -21,7 +21,7 @@ class Twopayment extends PaymentModule
     {
         $this->name = 'twopayment';
         $this->tab = 'payments_gateways';
-        $this->version = '1.2.0';
+        $this->version = '1.2.1';
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
         $this->author = 'Two';
         $this->bootstrap = true;
@@ -861,7 +861,12 @@ class Twopayment extends PaymentModule
                         $this->setTwoOrderPaymentData($id_order, $payment_data);
                     }
                 } else if (($new_order_status->id == Configuration::get('PS_TWO_OS_SHIPPING')) && $this->finalize_purchase_shipping) {
-                    $response = $this->setTwoPaymentRequest('/v1/order/' . $two_order_id . '/fulfilled', [], 'POST');
+                    if((int)$this->context->country->id == 23){
+                        $response = $this->setTwoPaymentRequest('/v1/order/' . $two_order_id . '/fulfilled?lang=nb_NO', [], 'POST', true);
+                    } else {
+                        $response = $this->setTwoPaymentRequest('/v1/order/' . $two_order_id . '/fulfilled?lang=en_US', [], 'POST', true);
+                    }
+
                     if (isset($response['id']) && $response['id']) {
                         $payment_data = array(
                             'two_order_id' => $response['id'],
@@ -875,8 +880,15 @@ class Twopayment extends PaymentModule
                     }
                 } else if (($new_order_status->id == Configuration::get('PS_TWO_OS_REFUND')) && $this->enable_buyer_refund) {
                     $paymentdata = $this->getTwoNewRefundData($order);
-                    $response = $this->setTwoPaymentRequest('/v1/order/' . $two_order_id . '/refund', $paymentdata, 'POST');
+                    
+                    if((int)$this->context->country->id == 23){
+                        $response = $this->setTwoPaymentRequest('/v1/order/' . $two_order_id . '/refund?lang=nb_NO', $paymentdata, 'POST', true);
+                    } else {
+                        $response = $this->setTwoPaymentRequest('/v1/order/' . $two_order_id . '/refund?lang=en_US', $paymentdata, 'POST', true);
+                    }
+                    
                     if (isset($response['id']) && $response['id']) {
+                        $response = $this->setTwoPaymentRequest('/v1/order/' . $two_order_id,[],'GET');
                         $payment_data = array(
                             'two_order_id' => $response['id'],
                             'two_order_reference' => $response['merchant_reference'],
@@ -1356,17 +1368,20 @@ class Twopayment extends PaymentModule
         return false;
     }
 
-    public function setTwoPaymentRequest($endpoint, $payload = [], $method = 'POST')
+    public function setTwoPaymentRequest($endpoint, $payload = [], $method = 'POST', $lang = false)
     {
         if ($method == "POST" || $method == "PUT") {
             $url = sprintf('%s%s', $this->getTwoCheckoutHostUrl(), $endpoint);
-            $url = $url . '?client=PS&client_v=' . $this->version;
+            if($lang){
+                $url = $url . '&client=PS&client_v=' . $this->version;
+            } else {
+                $url = $url . '?client=PS&client_v=' . $this->version;
+            }
             $params = empty($payload) ? '' : json_encode($payload);
             $headers = [
                 'Content-Type: application/json; charset=utf-8',
                 'X-API-Key:' . $this->api_key,
             ];
-            //echo "<pre>";print_r($params);echo "</pre>";die;
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
