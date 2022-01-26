@@ -119,6 +119,8 @@ class Twopayment {
             $("input[name='companyid']").prop('required', true);
             $("input[name='companyid']").closest(".form-group").show();
             $("input[name='companyid']").closest(".form-group").children('.form-control-comment').hide();
+            $("input[name='department']").closest(".form-group").show();
+            $("input[name='project']").closest(".form-group").show();
 
         } else {
 
@@ -129,6 +131,8 @@ class Twopayment {
             $("input[name='companyid']").prop('required', false);
             $("input[name='companyid']").closest(".form-group").hide();
             $("input[name='companyid']").closest(".form-group").children('.form-control-comment').show();
+            $("input[name='department']").closest(".form-group").hide();
+            $("input[name='project']").closest(".form-group").hide();
         }
     }
 
