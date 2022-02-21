@@ -28,7 +28,7 @@
                 <div class="panel" id="fieldset_22_1">                            
                     <div class="panel-heading"><i class="icon icon-tags"></i> Information</div>
                     <ul class="nav-pills nav-stacked">
-                        <li>Version: 1.2.1</li>
+                        <li>Version: 1.2.2</li>
                         <li><a href="https://docs.two.inc/developer-portal/plugins/prestashop" target="_blank"> User Guide</a></li>
                         <li><a href="https://www.two.inc/faq" target="_blank"> FAQs</a></li>
                         <li><a href="https://github.com/tillit-dot-ai/prestashop" target="_blank"> Changelog</a></li>
