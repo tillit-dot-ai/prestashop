@@ -1336,11 +1336,11 @@ class Twopayment extends PaymentModule
 
     public function getTwoCheckoutHostUrl()
     {
-        $two_checkout_url = 'https://api.tillit.ai';
+        $two_checkout_url = 'https://api.two.inc';
         if ($this->isTwoCheckoutDevelopment()) {
             $two_checkout_url = Configuration::get('PS_TWO_PAYMENT_DEV_MODE');
         } else if ($this->payment_mode == 'test') {
-            $two_checkout_url = 'https://test.api.tillit.ai';
+            $two_checkout_url = 'https://sandbox.api.two.inc';
         }
         return $two_checkout_url;
     }
