@@ -10,6 +10,7 @@
             <a class="list-group-item {if $twotabvalue == 1}active{/if}" href="#general-settings" aria-controls="general-settings" role="tab" data-toggle="tab">{l s='General Settings' mod='twopayment'}</a>
             <a class="list-group-item {if $twotabvalue == 2}active{/if}" href="#other-settings" aria-controls="other-settings" role="tab" data-toggle="tab">{l s='Other Settings' mod='twopayment'}</a>
             <a class="list-group-item {if $twotabvalue == 3}active{/if}" href="#order-status-settings" aria-controls="order-status-settings" role="tab" data-toggle="tab">{l s='Order Status Settings' mod='twopayment'}</a>
+            <a class="list-group-item {if $twotabvalue == 4}active{/if}" href="#information" aria-controls="information" role="tab" data-toggle="tab">{l s='Information' mod='twopayment'}</a>
         </div>
     </div>
     <div class="col-lg-10 col-md-9">
@@ -22,6 +23,18 @@
             </div>
             <div id="order-status-settings" role="tabpanel" class="tab-pane {if $twotabvalue == 3}active{/if}">
                 {$renderTwoOrderStatusForm nofilter}
+            </div>
+            <div id="information" role="tabpanel" class="tab-pane {if $twotabvalue == 4}active{/if}">
+                <div class="panel" id="fieldset_22_1">                            
+                    <div class="panel-heading"><i class="icon icon-tags"></i> Information</div>
+                    <ul class="nav-pills nav-stacked">
+                        <li>Version: 1.2.2</li>
+                        <li><a href="https://docs.two.inc/developer-portal/plugins/prestashop" target="_blank"> User Guide</a></li>
+                        <li><a href="https://www.two.inc/faq" target="_blank"> FAQs</a></li>
+                        <li><a href="https://github.com/tillit-dot-ai/prestashop" target="_blank"> Changelog</a></li>
+                        <li><a href="https://github.com/tillit-dot-ai/prestashop/releases" target="_blank"> Check Latest Version</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
